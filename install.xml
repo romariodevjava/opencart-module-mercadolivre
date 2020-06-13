@@ -5,33 +5,4 @@
     <author>Romário Pires</author>
 	<code>mercadolivre</code>
     <link>romario.ne@hotmail.com</link>
-
-    <file path="admin/controller/common/column_left.php">
-        <operation>
-            <search><![CDATA[
-           	$catalog = array();
-            ]]></search>
-            <add position="after"><![CDATA[
-            if ($this->user->hasPermission('access', 'extension/module/laquila')) {
-				$catalog[] = array(
-					'name'	   => $this->language->get('text_laquila'),
-					'href'     => $this->url->link('extension/module/laquila/products', 'user_token=' . $this->session->data['user_token'], true),
-					'children' => array()
-				);
-			}
-            ]]></add>
-        </operation>
-    </file>
-
-    <file path="admin/language/pt-br/common/column_left.php">
-        <operation>
-            <search><![CDATA[
-           	$_['text_affiliate']
-            ]]></search>
-            <add position="before"><![CDATA[
-            $_['text_laquila']            = 'Produtos Laquila';
-            ]]></add>
-        </operation>
-    </file>
-
 </modification>
