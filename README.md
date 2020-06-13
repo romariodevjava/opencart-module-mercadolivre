@@ -1,4 +1,4 @@
-[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.3.0-blue.svg?style=flat-square)](https://php.net/)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.3.0-blue.svg?style=flat-square)](https://php.net/)[![License MIT](https://img.shields.io/github/license/romariodevjava/opencart-module-mercadolivre?style=flat-square)](LICENSE.md)
 
 
 # Módulo MercadoLivre Para OpenCart
@@ -27,7 +27,7 @@ Achou e corrigiu um bug ou tem alguma feature em mente e deseja contribuir?
 * Envie um Pull Request
 * Obs.: Adicione exemplos para sua nova feature. Se seu Pull Request for relacionado a uma versão específica, o Pull Request não deve ser enviado para o branch master e sim para o branch correspondente a versão.
 
-# Authors
+# Autores
 
 * **José Romário** - *Initial work* - [romariodevjava](https://github.com/romariodevjava)
 
