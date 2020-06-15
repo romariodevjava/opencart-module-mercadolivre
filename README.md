@@ -12,8 +12,10 @@ Vamos trabalhar para ter mais módulos OpenSource, já que a Plataforma nasceu c
 2. Abra o seu admin do OpenCart -> Extensões -> Instalador -> Faça o upload do arquivo baixado
 3. Atualize as modificações. Abra o seu admin do OpenCart -> Extensões -> Modificações -> Atualizar
 4. Limpe o Cache do template. Abra o seu admin do OpenCart -> Dashboard -> Atualizar Cache do Tema
-5. Configure o Módulo do MercadoLivre em Extensões -> Extensões -> Selecione Módulos -> Instale o módulo e depois edite para configura-lo
-6. Abrir o Menu Mercado Livre -> Autenticação -> Clique no login para fazer a autenticação do seu usuário do Mercado Livre. Tem que usar o usuário admin da conta, não pode ser conta de colaborador.
+5. Configure o Módulo do Mercado Livre em Extensões -> Extensões -> Selecione Módulos -> Instale o módulo e depois edite para configura-lo
+6. Abrir o Menu Mercado Livre Extensão -> Fazer Autenticação -> Clique no login para fazer a autenticação do seu usuário do Mercado Livre. Tem que usar o usuário admin da conta, não pode ser conta de colaborador.
+
+**Obs.: Na tela da Autenticação, tem a url para colocar no aplicativo como redirecionamento.**
 
 Contribuições
 -------------
@@ -39,13 +41,13 @@ Achou e corrigiu um bug ou tem alguma feature em mente e deseja contribuir?
 
 
 # Features do módulo
-- [ ] Configuração - Em andamento
-- [ ] Exportar produtos para o Mercado Livre
+- [X] Configuração
+- [ ] Exportar produtos para o Mercado Livre - **Em andamento**
 - [ ] Atualizar os produtos e variações a cada edição no produto
 - [ ] Excluir desativar e excluir produto no Mercado Livre, quando excluído no OpenCart
 - [ ] Notificar as perguntas no OpenCart e ter a opção de responder
 - [ ] Notificar e exibir pedidos do Mercado Livre no OpenCart
-- [ ] Mapeamento das categorias do OpenCart x Mercado livre
+- [X] Mapeamento das categorias do OpenCart x Mercado livre
 
 ## License
 
