@@ -1,0 +1,217 @@
+{{ header }} {{ column_left }}
+<div id="content">
+
+    <div class="page-header">
+        <div class="container-fluid">
+
+            <div class="pull-right">
+                <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
+                <button type="button" data-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-product').toggleClass('hidden-sm hidden-xs');" class="btn btn-default hidden-md hidden-lg"><i class="fa fa-filter"></i></button>
+                <a href="javascript:void(0)" data-toggle="modal" data-target="#modalAddProductToML" data-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+                <a href="javascript:synchronizeStockPrice()" data-toggle="tooltip" title="{{ button_synchronize_stock_price }}" class="btn btn-warning"><i class="fa fa-refresh"></i></a>
+                <button type="button" form="form-product" formaction="{{ disconnect }}" data-toggle="tooltip" title="{{ button_disconnect }}" class="btn btn-danger" onclick="confirm('{{ text_confirm }}') ? $('#form-product').submit() : false;"><i class="fa fa-unlink"></i></button>
+            </div>
+
+            <h1>{{ heading_title }}</h1>
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                    <li><a href="{{ breadcrumb.href }} ">{{ breadcrumb.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        {% if error_warning %}
+            <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+                <button type="button" class="close" data-dismiss="alert">&times</button>
+            </div>
+        {% endif %}
+
+        {% if success %}
+            <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+
+        <div class="row">
+
+            <div id="filter-product" class="col-md-3 col-md-push-9 col-sm-12 hidden-sm hidden-xs">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-filter"></i> {{ text_filter }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="control-label" for="input-name">{{ entry_name }}</label>
+                            <input type="text" name="filter_name" value="{{ filter_name }}" placeholder="{{ entry_name }}" id="input-name" class="form-control"/>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label" for="input-status">{{ entry_status }}</label>
+                            <select name="filter_status" id="input-status" class="form-control">
+                                <option value=""></option>
+                                <option value="1" {{ filter_status == '1' ? 'selected' : '' }}>{{ text_enabled }}</option>
+                                <option value="0" {{ filter_status == '0' ? 'selected' : '' }}>{{ text_disabled }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group text-right">
+                            <button type="button" id="button-filter" class="btn btn-default"><i class="fa fa-filter"></i> {{ button_filter }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9 col-md-pull-3 col-sm-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-list"></i> {{ text_list }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{{ disconnect }}" method="post" enctype="multipart/form-data" id="form-product">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                    <tr>
+                                        <td style="width: 1px;" class="text-center"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', this.checked);"/></td>
+                                        <td class="text-center">{{ column_image }}</td>
+                                        <td class="text-left">{% if sort == 'pd.name' %} <a href="{{ sort_name }}" class="{{ order|lower }}">{{ column_name }}</a> {% else %} <a href="{{ sort_name }}">{{ column_name }}</a> {% endif %}</td>
+                                        <td class="text-right">{% if sort == 'p.quantity' %} <a href="{{ sort_quantity }}" class="{{ order|lower }}">{{ column_quantity }}</a> {% else %} <a href="{{ sort_quantity }}">{{ column_quantity }}</a> {% endif %}</td>
+                                        <td class="text-left">{% if sort == 'p.status' %} <a href="{{ sort_status }}" class="{{ order|lower }}">{{ column_status }}</a> {% else %} <a href="{{ sort_status }}">{{ column_status }}</a> {% endif %}</td>
+                                        <td class="text-left">{{ column_mercadolivre_id }}</td>
+                                        <td class="text-left">{{ column_mercadolivre_quantity_postage }}</td>
+                                        <td class="text-left">{{ column_mercadolivre_category }}</td>
+                                        <td class="text-left">{{ column_mercadolivre_status }}</td>
+                                        <td class="text-right">{{ column_action }}</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% if products %}
+                                        {% for product in products %}
+                                            <tr>
+                                                <td class="text-center">{% if product.product_id in selected %}
+                                                        <input type="checkbox" name="selected[]" value="{{ product.product_id }}" checked="checked"/>
+                                                    {% else %}
+                                                        <input type="checkbox" name="selected[]" value="{{ product.product_id }}"/>
+                                                    {% endif %}</td>
+                                                <td class="text-center">{% if product.image %} <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 60px"/> {% else %} <span class="img-thumbnail list"><i class="fa fa-camera fa-2x"></i></span> {% endif %}
+                                                </td>
+                                                <td class="text-left">{{ product.name }}</td>
+                                                <td class="text-right">
+                                                    <span class="label {{ product.quantity <= 0 ? 'label-warning' : (product.quantity <= 5 ? 'label-danger' : 'label-success' ) }}">{{ product.quantity }}</span>
+                                                </td>
+                                                <td class="text-left">{{ product.status }}</td>
+
+                                                {% if ml_quantity %}
+                                                    <td class="text-left">{{ product.ml_id }}</td>
+                                                    <td class="text-left">{{ product.ml_quantity }}</td>
+                                                    <td class="text-left">
+                                                        {% for ml_category in product.ml_categories %}
+                                                            {% if ml_category %}
+                                                                <span data-ml-category="{{ ml_category }}" class="load-categories"></span><br/>
+                                                            {% else %}
+                                                                {{ text_without_category }}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td class="text-left">{{ product.status_ml }} </td>
+
+                                                {% else %}
+                                                    <td class="text-left" colspan="4">{{ text_without_product_in_ml }}</td>
+                                                {% endif %}
+
+                                                <td class="text-right"><a href="{{ product.edit }}" data-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary"><i class="fa fa-pencil"></i></a></td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td class="text-center" colspan="8">{{ text_no_results }}</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                        <div class="row">
+                            <div class="col-sm-6 text-left">{{ pagination }}</div>
+                            <div class="col-sm-6 text-right">{{ results }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" id="modalAddProductToML">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ addProducts }}" method="post" id="import_product_image" enctype="multipart/form-data">
+
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            // IE and Edge fix!
+            $('button[form=\'form-product\']').on('click', function (e) {
+                $('#form-product').attr('action', $(this).attr('formaction'));
+            });
+
+            setAutoCompleteProductName();
+        });
+
+        function filterProducts() {
+            url = 'index.php?route=extension/module/mercadolivre/products&user_token={{ user_token }}';
+
+            var filter_name = $('input[name=\'filter_name\']').val();
+            if (filter_name) {
+                url += '&filter_name=' + encodeURIComponent(filter_name);
+            }
+            var filter_status = $('select[name=\'filter_status\']').val();
+            if (filter_status) {
+                url += '&filter_status=' + encodeURIComponent(filter_status);
+            }
+
+            window.location = url;
+        }
+
+        function synchronizeStockPrice() {
+
+        }
+
+        function setAutoCompleteProductName() {
+            var $input = $('input[name=\'filter_name\']');
+
+            $input.autocomplete({
+                'source': function (request, response) {
+                    $.getJSON(`index.php?route=catalog/product/autocomplete&user_token={{ user_token }}&filter_name=${encodeURIComponent(request)}`,
+                        function (json) {
+                            response($.map(json, function (item) {
+                                return {label: item['name'], value: item['product_id']}
+                            }));
+                        }
+                    );
+                },
+                'select': function (item) {
+                    $input.val(item['label']);
+                }
+            });
+        }
+
+    </script>
+{{ footer }}

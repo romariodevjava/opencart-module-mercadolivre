@@ -4,7 +4,7 @@
         <div class="container-fluid">
 
             <div class="pull-right">
-                <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-check-circle"></i></button>
+                <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
                 <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
             </div>
 
@@ -39,14 +39,18 @@
                 <form action="{{ action }}" method="post" enctype="multipart/form-data" class="form-horizontal" id="form-mercadolivre-config">
                     <ul class="nav nav-tabs">
                         <li class="active"><a href="#tab-general" data-toggle="tab">{{ tab_general }}</a></li>
-                        <li><a href="#tab-product-settings" data-toggle="tab">{{ tab_data }}</a></li>
+                        <li><a href="#tab-product-settings" data-toggle="tab">{{ tab_product_settings }}</a></li>
+                        <li><a href="#tab-categories" data-toggle="tab">{{ tab_categories }}</a></li>
+                        <li><a href="#tab-feedback" data-toggle="tab">{{ tab_feedback }}</a></li>
+                        <li><a href="#tab-shipping" data-toggle="tab">{{ tab_shipping }}</a></li>
+                        <li><a href="#tab-template" data-toggle="tab">{{ tab_template }}</a></li>
                     </ul>
 
                     <div class="tab-content">
                         <div class="tab-pane active" id="tab-general">
 
                             <div class="form-group required">
-                                <label class="col-sm-2 control-label" for="input-app-id"><span data-toggle="tooltip">{{ entry_app_id }}</span></label>
+                                <label class="col-sm-2 control-label" for="input-app-id">{{ entry_app_id }}</label>
                                 <div class="col-sm-10">
                                     <input type="number" name="module_mercadolivre_app_id" value="{{ module_mercadolivre_app_id }}" placeholder="{{ entry_app_id }}" class="form-control" id="input-app-id" maxlength="30" required/>
                                     {% if error_app_id %}
@@ -68,13 +72,7 @@
                             <div class="form-group required">
                                 <label class="col-sm-2 control-label" for="input-country">{{ entry_country }}</label>
                                 <div class="col-sm-10">
-                                    <select name="module_mercadolivre_country" class="form-control" id="input-country" onchange="loadListingsTypes(this.value)">
-                                        <option value="">{{ entry_select }}</option>
-
-                                        {% for country in countries %}
-                                            <option value="{{ country.key }}" {% if country.key == module_mercadolivre_country %} selected {% endif %}>{{ country.value }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <select name="module_mercadolivre_country" class="form-control" data-value="{{ module_mercadolivre_country }}" id="input-country" onchange="loadListingsTypes(); loadCategories();"></select>
                                     {% if error_app_country %}
                                         <div class="text-danger">{{ error_app_country }}</div>
                                     {% endif %}
@@ -84,9 +82,9 @@
                             <div class="form-group required">
                                 <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
                                 <div class="col-sm-10">
-                                    <select name="module_laquila_status" id="input-status" class="form-control">
+                                    <select name="module_mercadolivre_status" id="input-status" class="form-control">
                                         <option value="0">{{ text_disabled }}</option>
-                                        <option value="1" {% if module_laquila_status %} selected="selected" {% endif %}>{{ text_enabled }}</option>
+                                        <option value="1" {% if module_mercadolivre_status %} selected="selected" {% endif %}>{{ text_enabled }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -98,7 +96,7 @@
                             <div class="form-group required">
                                 <label class="col-sm-2 control-label" for="input-listing-type">{{ entry_ad_type }}</label>
                                 <div class="col-sm-10">
-                                    <select name="module_mercadolivre_listing_type" class="form-control" id="input-listing-type">
+                                    <select name="module_mercadolivre_listing_type" class="form-control" data-value="{{ module_mercadolivre_listing_type }}" id="input-listing-type">
                                         <option value="">{{ entry_select_country }}</option>
                                     </select>
                                     {% if error_listing_type %}
@@ -107,6 +105,185 @@
                                 </div>
                             </div>
 
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-currency">{{ entry_currency }}</label>
+                                <div class="col-sm-10">
+                                    <select name="module_mercadolivre_currency" data-value="{{ module_mercadolivre_currency }}" class="form-control" id="input-currency"></select>
+                                    {% if error_currency %}
+                                        <div class="text-danger">{{ error_currency }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-buying-mode">{{ entry_buying_mode }}</label>
+                                <div class="col-sm-10">
+                                    <select name="module_mercadolivre_buying_mode" class="form-control" id="input-buying-mode">
+                                        <option value="">{{ entry_select }}</option>
+                                        <option value="buy_it_now" {% if module_mercadolivre_buying_mode == 'buy_it_now' %} selected {% endif %}>{{ entry_buy_it_now }}</option>
+                                        <option value="classified" {% if module_mercadolivre_buying_mode == 'classified' %} selected {% endif %}>{{ entry_classified }}</option>
+{#                                        <option value="auction" {% if module_mercadolivre_buying_mode == 'auction' %} selected {% endif %}>{{ entry_auction }}</option>
+A modalidade de arremate ("buying_mode"="auction") ainda aparecerá nas APIs de algumas categorias, mas não poderá ser utilizada
+#}
+                                    </select>
+                                    {% if error_buying_mode %}
+                                        <div class="text-danger">{{ error_buying_mode }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-condition">{{ entry_condition }}</label>
+                                <div class="col-sm-10">
+                                    <select name="module_mercadolivre_condition" class="form-control" id="input-condition">
+                                        <option value="">{{ entry_select }}</option>
+                                        <option value="new" {% if module_mercadolivre_condition == 'new' %} selected {% endif %}>{{ entry_new }}</option>
+                                        <option value="used" {% if module_mercadolivre_condition == 'used' %} selected {% endif %}>{{ entry_used }}</option>
+                                        <option value="not_specified" {% if module_mercadolivre_condition == 'not_specified' %} selected {% endif %}>{{ entry_not_specified }}</option>
+                                    </select>
+                                    {% if error_condition %}
+                                        <div class="text-danger">{{ error_condition }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-condition"><span data-toggle="tooltip" title="{{ help_auto_detect_category }}">{{ entry_auto_detect_category }}</span></label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="checkbox" {{ module_mercadolivre_auto_detect_category ? 'checked' : '' }} name="module_mercadolivre_auto_detect_category" value="1">
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-price-adjustment"><span data-toggle="tooltip" title="{{ help_price_adjustment }}">{{ entry_price_adjustment }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="module_mercadolivre_price_adjustment" value="{{ module_mercadolivre_price_adjustment }}"
+                                           placeholder="{{ entry_price_adjustment }}" class="form-control" id="input-price-adjustment" />
+                                    {% if error_price_adjustment %}
+                                        <div class="text-danger">{{ error_price_adjustment }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-condition">{{ entry_consider_special_price }}</label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="checkbox" {{ module_mercadolivre_consider_special_price ? 'checked' : '' }} name="module_mercadolivre_consider_special_price" value="1">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="tab-pane" id="tab-categories">
+                            <div class="alert alert-info"><i class="fa fa-info-circle"></i>Categorias a ser aplicada em caso de falha ou desativação da auto associação do Mercado Livre em cima dos produtos. <b>Caso um produto use duas categorias, será utilizado apenas uma categoria.</b></div>
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th class="col-sm-4">{{ column_opecart_category }}</th>
+                                    <th class="col-sm-8">{{ column_mercadolivre_category }}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for category in categories %}
+                                    <tr>
+                                        <td>{{ category.name }}</td>
+                                        <td class="col-sm-8">
+                                            {% if category.ml_category %}
+                                                <span class="category-ml-{{ category.category_id }}">
+                                                    <input type="hidden" name="module_mercadolivre_categories[{{ category.category_id }}]" value="{{ category.ml_category }}"/>
+                                                    <span data-ml-category="{{ category.ml_category }}" class="load-categories"></span>
+                                                    <a href="javascript:changeCategory({{ category.category_id }})">{{ btn_change_category }}</a>
+                                                </span>
+                                            {% endif %}
+
+                                            <span id="col-ml-category{{ category.category_id }}">
+                                                <select class="form-control mercadolivre-categories" style="width: auto; display: {{ category.ml_category ? 'none' : 'initial' }};" onchange="loadCategoriesChildren(this.value, '{{ category.category_id }}', 0)">
+                                                    <option>{{ entry_select_country }}</option>
+                                                </select>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="tab-pane" id="tab-feedback">
+                            <div class="alert alert-info"><i class="fa fa-info-circle"></i>Você pode configurar uma mensagem após receber o pedido.</div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-feedback-enabled">{{ entry_feedback_enabled }}</label>
+                                <div class="col-sm-10">
+                                    <select name="module_mercadolivre_feedback_enabled" class="form-control" id="input-feedback-enabled">
+                                        <option value="n">{{ text_no }}</option>
+                                        <option value="y" {{ module_mercadolivre_feedback_enabled == 'y' ? 'selected' : '' }}>{{ text_yes }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-feedback-message">{{ entry_feedback_message }}</label>
+                                <div class="col-sm-10">
+                                    <textarea name="module_mercadolivre_feedback_message" class="form-control" id="input-feedback-message">{{ module_mercadolivre_feedback_message }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane" id="tab-shipping">
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="input-shipping-type">{{ entry_shipping_type }}</label>
+                                <div class="col-sm-10">
+                                    <select name="module_mercadolivre_shipping_type" class="form-control" id="input-shipping-type">
+                                        <option value="me1">ME1</option>
+                                        <option value="me2" {{ module_mercadolivre_shipping_type == 'me2' ? 'selected' : '' }}>ME2</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-shipping-with-local-pick-up">{{ entry_with_local_pick_up }}</label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="checkbox" {{ module_mercadolivre_shipping_with_local_pick_up ? 'checked' : '' }} name="module_mercadolivre_shipping_with_local_pick_up" value="1" id="input-shipping-with-local-pick-up">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-shipping-free"><span data-toggle="tooltip" title="{{ help_shipping_free }}">{{ entry_shipping_free }}</span></label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="checkbox" {{ module_mercadolivre_shipping_free ? 'checked' : '' }} name="module_mercadolivre_shipping_free" value="1" id="input-shipping-free">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane" id="tab-template">
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-template-title">{{ entry_template_title }}</label>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" id="input-template-title" name="module_mercadolivre_template_title" cols="40" rows="8">{{ module_mercadolivre_template_title }}</textarea>
+                                    <br>{{ help_template_title }}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-template-description">{{ entry_template_description }}</label>
+                                <div class="col-sm-10">
+                                    <textarea class="form-control" id="input-template-description" name="module_mercadolivre_template_description" cols="40" rows="12">{{ module_mercadolivre_template_description }}</textarea>
+                                    <br>{{ help_template_description }}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-image"><span data-toggle="tooltip" title="{{ help_image_additional }}">{{ entry_template_image_additional }}</span></label>
+                                <div class="col-sm-10">
+                                    <a href="" id="thumb-image" data-toggle="image" class="img-thumbnail">
+                                        <img src="{{ thumb }}" alt="" title="" data-placeholder="{{ placeholder }}"/>
+                                    </a>
+                                    <input type="hidden" name="module_mercadolivre_template_image_aditional" value="{{ module_mercadolivre_template_image_aditional }}" id="input-image"/>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -114,56 +291,124 @@
         </div>
     </div>
 
-    <div class="modal" tabindex="-1" role="dialog" id="modalImportImages">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Cadastrar imagens por planilha laquila</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ import_products_images }}" method="post" id="import_product_image" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label class="control-label" for="input-file-import">{{ entry_file_import }}</label>
-                            <input type="file" name="document" placeholder="{{ entry_file_import }}" id="input-file-import" class="form-control" required accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/excel"/>
-                        </div>
-
-                        <div class="form-group text-center">
-                            <button type="button" onclick="$('#import_product_image').submit();" class="btn btn-success">{{ button_send }} <i class="fa fa-send"></i></button>
-                        </div>
-                        <p>Envie a planilha de cadastro laquila para obter as imagens por ela</p>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script type="text/javascript">
+        var categories = [];
+        $(document).ready(function () {
+            loadCountriesAvailable();
 
-        function loadListingsTypes(country) {
-            if (country) {
-                $.ajax({
-                    url: `https://api.mercadolibre.com/sites/${country}/listing_types`,
-                    dataType: 'json',
-                    method: 'GET',
-                    success: function (json) {
-                      if (json) {
-                          var $select = $('#input-listing-type');
-                          $select.html('<option value="">{{ entry_select }}</option>');
-
-                          $.each(json, function (i, v) {
-                              $select.append(`<option value="${v.id}">${v.name}</option>`);
-                          });
-                      }
-                    }
-                });
+            if ($('#input-country').data('value')) {
+                loadListingsTypes();
+                loadCategories();
             }
+
+            loadCurrencies();
+            loadCategoriesTexts();
+        });
+
+        function loadCategoriesTexts() {
+            $('.load-categories').each(function (i, v) {
+                var code = $(v).data('ml-category');
+
+                $.getJSON(`https://api.mercadolibre.com/categories/${code}`, function (json) {
+                    var path = json['path_from_root'].reduce(function (i1, i2) {
+                        return {name: i1['name'] + ' -> ' + i2['name']};
+                    });
+                    $(v).text(path['name'] + ' -- ');
+                });
+            });
+        }
+
+        function loadCountriesAvailable() {
+            $.getJSON(`https://api.mercadolibre.com/sites`,
+                function (data) {
+                    var optionsAvailabre = ['MLA', 'MLB', 'MCO', 'MCR', 'MEC', 'MLC', 'MLM', 'MLU', 'MLV', 'MPA', 'MPE', 'MPT', 'MRD'];
+                    var newOptions = data.filter(function (item) {
+                        return optionsAvailabre.includes(item['id']);
+                    });
+
+                    createSelectOptions(newOptions, 'id', 'name',  $('#input-country'));
+                }
+            );
+        }
+
+        function loadListingsTypes() {
+            var country = $('#input-country option:selected').val() || $('#input-country').data('value');
+
+            if (country) {
+                $.getJSON(`https://api.mercadolibre.com/sites/${country}/listing_types`,
+                    function (json) {
+                        createSelectOptions(json, 'id', 'name', $('#input-listing-type'));
+                    }
+                );
+            }
+        }
+
+        function loadCurrencies() {
+            $.getJSON('https://api.mercadolibre.com/currencies/',
+                function (json) {
+                    createSelectOptions(json, 'id', 'description', $('#input-currency'));
+                }
+            );
+        }
+
+        function changeCategory(index) {
+            $('.category-ml-' + index).remove();
+            $('#col-ml-category' + index).find('.mercadolivre-categories').show();
+        }
+
+        function loadCategoriesChildren(ml_category_id, category_index, indexSelectCall) {
+            var $column = $('#col-ml-category' + category_index);
+
+            $column.find('.mercadolivre-categories').each(function (i, v) {
+                if (i > indexSelectCall) {
+                    $(v).remove();
+                    $('#col-ml-category' + category_index).find('i').remove();
+                }
+            });
+
+            if (!ml_category_id) return;
+
+            $.getJSON(`https://api.mercadolibre.com/categories/${ml_category_id}`, function (json) {
+
+                if (json['settings']['listing_allowed']) {
+                    var $select = $column.find('.mercadolivre-categories:last');
+                    $select.attr('name', `module_mercadolivre_categories[${category_index}]`);
+                    $('#col-ml-category' + category_index).append('<i class="fa fa-check-circle" style="color: green;font-size: 26px;margin-left: 15px;"></i>');
+                } else {
+                    var $select = $('<select class="form-control mercadolivre-categories" style="width: auto; display: initial;"><option>{{ entry_select_left }}</option></select>');
+                    $select.on('change', function () {
+                        loadCategoriesChildren(this.value, category_index, (indexSelectCall + 1));
+                    });
+
+                    createSelectOptions(json['children_categories'], 'id', 'name', $select);
+                    $('#col-ml-category' + category_index).append($select);
+                }
+            });
+        }
+
+        function loadCategories() {
+            if (categories.length) {
+                createSelectOptions(categories, 'id', 'name', $('.mercadolivre-categories'));
+                return;
+            }
+
+            var country = $('#input-country option:selected').val() || $('#input-country').data('value');
+            if (!country) return;
+
+            $.getJSON(`https://api.mercadolibre.com/sites/${country}/categories`, function (json) {
+                    categories = json;
+                    createSelectOptions(json, 'id', 'name', $('.mercadolivre-categories'));
+                }
+            );
+        }
+
+        function createSelectOptions(options, value, description, $select) {
+            $select.html('<option value="">{{ entry_select }}</option>');
+            var valueSelected = $select.data('value');
+
+            $.each(options, function (i, v) {
+                $select.append(`<option value="${v[value]}" ${valueSelected == v[value] ? 'selected' : ''}>${v[description]}</option>`);
+            });
         }
     </script>
 

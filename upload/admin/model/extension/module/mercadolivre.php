@@ -1,7 +1,7 @@
 <?php
 
 
-class ModelExtensionModuleLaquila extends Model
+class ModelExtensionModuleMercadolivre extends Model
 {
     private $key_prefix = 'module_mercadolivre';
 
@@ -14,6 +14,7 @@ class ModelExtensionModuleLaquila extends Model
 			  `product_id` int(11) NOT NULL,
 			  `listing_type_id` varchar(15) NOT NULL,
 			  `mercadolivre_category_id` varchar(15) NOT NULL,
+			  `status` varchar(15) NOT NULL,
 			  `created_at` datetime NOT NULL,
 			  `updated_at` datetime NULL,
 			  PRIMARY KEY (`mercadolivre_products_id`)
@@ -31,9 +32,10 @@ class ModelExtensionModuleLaquila extends Model
         $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "mercadolivre_categories` (
 			  `mercadolivre_category_id` int(11) NOT NULL AUTO_INCREMENT,
 			  `category_id` int(11) NOT NULL,
-			  `mercadolivre_category_id` varchar(15) NOT NULL,
+			  `mercadolivre_category_code` varchar(15) NOT NULL,
 			  `created_at` datetime NOT NULL,
-			  PRIMARY KEY (`mercadolivre_category_id`)
+			  PRIMARY KEY (`mercadolivre_category_id`),
+			  FOREIGN KEY (category_id) REFERENCES " . DB_PREFIX . "oc_category(category_id)
           ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 
         $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "mercadolivre_questions` (
@@ -59,7 +61,7 @@ class ModelExtensionModuleLaquila extends Model
 			  `sale_fee` decimal(16, 2) NOT NULL,
 			  `listing_type_id` varchar(15) NOT NULL,
 			  `created_at` datetime NOT NULL,
-			  PRIMARY KEY (`laquila_order_id`)
+			  PRIMARY KEY (`mercadolivre_order_id`)
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 
         $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "mercadolivre_orders_products` (
@@ -100,5 +102,16 @@ class ModelExtensionModuleLaquila extends Model
         $this->db->query("DROP TABLE `" . DB_PREFIX . "mercadolivre_categories`");
         $this->db->query("DROP TABLE `" . DB_PREFIX . "mercadolivre_variations`");
         $this->db->query("DROP TABLE `" . DB_PREFIX . "mercadolivre_products`");
+    }
+
+    public function getCategories($parent_id = 0) {
+        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category` c LEFT JOIN `" . DB_PREFIX . "category_description` cd ON (c.category_id = cd.category_id) LEFT JOIN `" . DB_PREFIX . "category_to_store` c2s ON (c.category_id = c2s.category_id) WHERE c.parent_id = '" . (int)$parent_id . "' AND cd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND c2s.store_id = '" . (int)$this->config->get('config_store_id') . "'  AND c.status = '1' ORDER BY c.sort_order, LCASE(cd.name)");
+        return $query->rows;
+    }
+
+    public function getProduct($product_id) {
+        $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_products` WHERE `product_id` = '" . ($product_id) ."'");
+
+        return $result->rows;
     }
 }
