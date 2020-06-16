@@ -33,6 +33,8 @@ Achou e corrigiu um bug ou tem alguma feature em mente e deseja contribuir?
 
 * **José Romário** - *Initial work* - [romariodevjava](https://github.com/romariodevjava)
 
+# Contribuem
+[![License MIT](https://stc.pagseguro.uol.com.br/public/img/botoes/doacoes/209x48-doar-assina.gif)](https://pagseguro.uol.com.br/checkout/v2/donation.html?receiverEmail=romario2009142009@hotmail.com&currency=BRL)
 
 # Requerimentos para instalar o módulo
 * PHP 7.3 ou Superior
