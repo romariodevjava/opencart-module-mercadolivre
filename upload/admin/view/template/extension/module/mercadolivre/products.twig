@@ -7,7 +7,7 @@
             <div class="pull-right">
                 <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
                 <button type="button" data-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-product').toggleClass('hidden-sm hidden-xs');" class="btn btn-default hidden-md hidden-lg"><i class="fa fa-filter"></i></button>
-                <a href="javascript:void(0)" data-toggle="modal" data-target="#modalAddProductToML" data-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+                <a href="javascript:loadModalAddProducts()" data-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa fa-plus"></i></a>
                 <a href="javascript:synchronizeStockPrice()" data-toggle="tooltip" title="{{ button_synchronize_stock_price }}" class="btn btn-warning"><i class="fa fa-refresh"></i></a>
                 <button type="button" form="form-product" formaction="{{ disconnect }}" data-toggle="tooltip" title="{{ button_disconnect }}" class="btn btn-danger" onclick="confirm('{{ text_confirm }}') ? $('#form-product').submit() : false;"><i class="fa fa-unlink"></i></button>
             </div>
@@ -89,12 +89,14 @@
                                     {% if products %}
                                         {% for product in products %}
                                             <tr>
-                                                <td class="text-center">{% if product.product_id in selected %}
-                                                        <input type="checkbox" name="selected[]" value="{{ product.product_id }}" checked="checked"/>
+                                                <td class="text-center">
+                                                    <input type="checkbox" name="selected[]" data-ml-code="{{ product.ml_id }}" value="{{ product.product_id }}" {{ product.product_id in selected ? 'checked' : '' }} />
+                                                <td class="text-center">
+                                                    {% if product.image %}
+                                                        <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 60px"/>
                                                     {% else %}
-                                                        <input type="checkbox" name="selected[]" value="{{ product.product_id }}"/>
-                                                    {% endif %}</td>
-                                                <td class="text-center">{% if product.image %} <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 60px"/> {% else %} <span class="img-thumbnail list"><i class="fa fa-camera fa-2x"></i></span> {% endif %}
+                                                        <span class="img-thumbnail list"><i class="fa fa-camera fa-2x"></i></span>
+                                                    {% endif %}
                                                 </td>
                                                 <td class="text-left">{{ product.name }}</td>
                                                 <td class="text-right">
@@ -143,28 +145,92 @@
     </div>
 
     <div class="modal" tabindex="-1" role="dialog" id="modalAddProductToML">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"></h5>
+                    <h3 class="modal-title">{{ text_add_products_in_ml }}</h3>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
+
                 <div class="modal-body">
-                    <form action="{{ addProducts }}" method="post" id="import_product_image" enctype="multipart/form-data">
+                    <div class="container-fluid">
+                        <form class="form-horizontal" onsubmit="return false;" id="add_products_in_ml">
+                            <div class="row">
 
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="input-category"><span data-toggle="tooltip" title="{{ help_category_for_ads }}">{{ entry_select_category }}</span></label>
+                                    <div class="col-sm-9" id="input-category">
+                                        <select class="form-control mercadolivre-categories" style="width: auto; display:initial" id="category" onchange="loadCategoriesChildren(this.value, 0)">
+                                            <option>{{ entry_select }}</option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                        </div>
-                    </form>
+                                <div class="form-group required">
+                                    <label class="col-sm-3 control-label" for="input-listing-type">{{ entry_ad_type }}</label>
+                                    <div class="col-sm-9">
+                                        <select class="form-control" id="input-listing-type" name="ml_listing_type" data-value="{{ listing_type }}">
+                                            <option>{{ entry_select }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" onchange="changeWarranty(this.value)" for="input-warranty-type">{{ entry_product_warranty_type }}</label>
+                                    <div class="col-sm-9">
+                                        <select class="form-control" id="input-warranty-type" name="ml_product_warranty_type">
+                                            <option value="">{{ without_warranty }}</option>
+                                            <option value="{{ warranty_of_seller }}">{{ warranty_of_seller }}</option>
+                                            <option value="{{ warranty_of_factory }}">{{ warranty_of_factory }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="warranty_div" style="display: none">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label" for="input-warranty-unit">{{ entry_product_warranty_unit }}</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control" id="input-warranty-unit" name="ml_product_warranty_unit">
+                                                <option value="{{ entry_days }}">{{ entry_days }}</option>
+                                                <option value="{{ entry_month }}">{{ entry_month }}</option>
+                                                <option value="{{ entry_years }}">{{ entry_years }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label" for="input-warranty">{{ entry_product_warranty }}</label>
+                                        <div class="col-sm-9">
+                                            <input type="number" class="form-control" id="input-warranty" name="ml_product_warranty"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="input-price-adjustment"><span data-toggle="tooltip" title="{{ help_price_adjustment }}">{{ entry_price_adjustment }}</span></label>
+                                    <div class="col-sm-9">
+                                        <input type="text" name="ml_price_adjustment" value="{{ price_adjustment }}" placeholder="{{ entry_price_adjustment }}" class="form-control" id="input-price-adjustment"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="sendProducts(document.forms.add_products_in_ml);" id="btn-add-send" data-loading-text="{{ text_loading }}">{{ button_send }}</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ button_cancel }}</button>
+                </div>
+
             </div>
         </div>
     </div>
 
     <script type="text/javascript">
+
+        var categoryFinished = false;
 
         $(document).ready(function () {
             // IE and Edge fix!
@@ -173,7 +239,122 @@
             });
 
             setAutoCompleteProductName();
+            loadCategories();
+            loadListingsTypes();
         });
+
+        function changeWarranty(value) {
+            if (value !== '') {
+                $('#warranty_div').show();
+            } else {
+                $('#warranty_div').hide();
+            }
+        }
+
+        function loadModalAddProducts() {
+            var $products = $("input[name='selected[]']:checked");
+
+            if (!$products.length) {
+                alert('{{ entry_select_product }}');
+                return;
+            }
+
+            $('#modalAddProductToML').modal('show');
+        }
+
+        function sendProducts(form) {
+            var body = $(form).serializeArray();
+            if (validateForm(body)) {
+                var $products = $("input[name='selected[]']:checked");
+                body.push({
+                    name: 'product_ids', value: $products.map(function (v) {
+                        return this.value;
+                    }).get()
+                });
+
+                $.ajax({
+                    url: 'index.php?route=extension/module/mercadolivre/addProducts&user_token={{ user_token }}',
+                    type: 'post',
+                    dataType: 'json',
+                    data: body,
+                    beforeSend: function () {
+                        $('#btn-add-send').button('loading');
+                    },
+                    complete: function () {
+                        $('#btn-add-send').button('reset');
+                    },
+                    success: function (json) {
+                        if (json['error']) {
+                            alert(json['error']);
+                        }
+
+                        if (json['success']) {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+            }
+
+            return false;
+        }
+
+        function validateForm(body) {
+            var $firstCategory = $('.mercadolivre-categories:first');
+            if ($firstCategory.val() && !categoryFinished) {
+                alert('{{ message_error_select_category_or_unselect }}');
+                return false;
+            }
+
+            if (body['ml_listing_type'] == '') {
+                alert('{{ message_error_listing_type }}');
+                return false;
+            }
+
+            return true;
+        }
+
+        function loadCategories() {
+            var country = '{{ ml_country }}';
+
+            $.getJSON(`https://api.mercadolibre.com/sites/${country}/categories`, function (json) {
+                    createSelectOptions(json, 'id', 'name', $('.mercadolivre-categories'));
+                }
+            );
+        }
+
+        function loadCategoriesChildren(ml_category_id, indexSelectCall) {
+            var $column = $('#input-category');
+
+            $column.find('.mercadolivre-categories').each(function (i, v) {
+                if (i > indexSelectCall) {
+                    $(v).remove();
+                    $column.find('i').remove();
+                }
+            });
+
+            if (!ml_category_id) return;
+
+            $.getJSON(`https://api.mercadolibre.com/categories/${ml_category_id}`, function (json) {
+                categoryFinished = json['settings']['listing_allowed'];
+
+                if (categoryFinished) {
+                    var $select = $column.find('.mercadolivre-categories:last');
+                    $select.attr('name', 'ml_category');
+                    $column.append('<i class="fa fa-check-circle" style="color: green;font-size: 26px;margin-left: 15px;"></i>');
+                } else {
+                    var $select = $('<select class="form-control mercadolivre-categories" style="width: auto; display: initial;"><option>{{ entry_select_left }}</option></select>');
+                    $select.on('change', function () {
+                        loadCategoriesChildren(this.value, (indexSelectCall + 1));
+                    });
+
+                    createSelectOptions(json['children_categories'], 'id', 'name', $select);
+                    $column.append($select);
+                }
+            });
+        }
 
         function filterProducts() {
             url = 'index.php?route=extension/module/mercadolivre/products&user_token={{ user_token }}';
@@ -210,6 +391,25 @@
                 'select': function (item) {
                     $input.val(item['label']);
                 }
+            });
+        }
+
+        function loadListingsTypes() {
+            var country = '{{ ml_country }}';
+
+            $.getJSON(`https://api.mercadolibre.com/sites/${country}/listing_types`,
+                function (json) {
+                    createSelectOptions(json, 'id', 'name', $('#input-listing-type'));
+                }
+            );
+        }
+
+        function createSelectOptions(options, value, description, $select) {
+            $select.html('<option value="">{{ entry_select }}</option>');
+            var valueSelected = $select.data('value');
+
+            $.each(options, function (i, v) {
+                $select.append(`<option value="${v[value]}" ${valueSelected == v[value] ? 'selected' : ''}>${v[description]}</option>`);
             });
         }
 

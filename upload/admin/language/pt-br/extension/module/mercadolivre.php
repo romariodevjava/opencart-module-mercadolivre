@@ -21,8 +21,10 @@ $_['entry_currency']                   = 'Moeda utilizada';
 $_['entry_ad_type']                    = 'Tipo de anúncio para publicar os produtos';
 $_['entry_option_value']               = 'Variação do tipo escolhido';
 $_['entry_select']                     = 'Selecione uma opção';
+$_['entry_select_product']             = 'Selecione pelo menos um produto';
 $_['entry_select_left']                = 'Selecione uma opção a esquerda';
 $_['entry_select_country']             = 'Selecione um país primeiro';
+$_['entry_select_category']            = 'Deseja selecionar uma categoria?';
 $_['entry_buying_mode']                = 'Modo de compra';
 $_['entry_buy_it_now']                 = 'Compre agora';
 $_['entry_classified']                 = 'Classificados';
@@ -41,16 +43,27 @@ $_['entry_shipping_free']              = 'Com frete grátis?';
 $_['entry_template_title']             = 'Modelo do título da publicação';
 $_['entry_template_description']       = 'Modelo da descrição da publicação';
 $_['entry_template_image_additional']  = 'Imagem adicional';
+$_['entry_product_warranty']           = 'Garantia do produto';
+$_['entry_product_warranty_unit']      = 'Unidade de medida da garantia';
+$_['entry_product_warranty_type']      = 'Tipo de Garantia do produto';
+$_['warranty_of_seller']               = 'Garantia do vendedor';
+$_['warranty_of_factory']              = 'Garantia de fábrica';
+$_['without_warranty']                 = 'Sem Garantia';
+$_['entry_month']                      = 'meses';
+$_['entry_days']                       = 'dias';
+$_['entry_years']                      = 'anos';
+
 
 
 //Helpers
 $_['help_auto_detect_category']        = 'Faz a atribuição automática da categoria do produto no Mercado Livre pelo título';
 $_['help_app_secret']                  = 'App Secret da aplicação criada no Mercado Livre';
 $_['help_shipping_free']               = 'Ofereça frete grátis aos seus compradores com o mercado envios, veja as políticas do mercado envio';
-$_['help_price_adjustment']            = "Ajuste de preços antes de enviar para o Mercado Livre, poder ser em unidades(moeda) ou porcentagem(%), Exemplo: 20.00 ou 5%. Tambem pode ser usado condições como: '>500:5%;>600:5%+5;<500:5;>=500:200+5%', onde cada ';' é uma condição, '>' valor do produto maior que o valor especificado, '<' valor do produto menor que o valor especificado, '>=' maior ou igual ao valor do produto, '<=' menor ou igual ao valor do produto, '+' soma dois ou mais valores em cima do valor do produto, '-' subtrai dois ou mais valores em cima do valor do produto";
+    $_['help_price_adjustment']            = "Ajuste de preços antes de enviar para o Mercado Livre, poder ser em unidades(moeda) ou porcentagem(%), Exemplo: 20.00 ou 5%. Tambem pode ser usado condições como: '>500:5%;>600:5%+5;<500:5;>=500:200+5%', onde cada ';' é uma condição, '>' valor do produto maior que o valor especificado, '<' valor do produto menor que o valor especificado, '>=' maior ou igual ao valor do produto, '<=' menor ou igual ao valor do produto, '+' soma dois ou mais valores em cima do valor do produto, '-' subtrai dois ou mais valores em cima do valor do produto";
 $_['help_template_title']              = "Máximo de 60 caracteres. chaves reservadas disponiveís __TITLE__ , __MODEL__ , __SKU__ , __BRAND__ , __ISBN__ and __MPN__";
-$_['help_template_description']        = "chaves reservadas disponiveís __TITLE__ , __DESCRIPTION__ , __MODEL__ , __SKU__ , __BRAND__ , __ISBN__ , __MPN__ e __ATTRIBUTE__";
+$_['help_template_description']        = "chaves reservadas disponiveís __TITLE__ , __DESCRIPTION__ , __MODEL__ , __SKU__ , __BRAND__ , __ISBN__ e __MPN__";
 $_['help_image_additional']            = "Imagem a ser adicionada por último no produto";
+$_['help_category_for_ads']            = "Deseja aplicar uma categoria para todos os produtos selecionados, basta selecionar, caso contrário, a categoria será escolhida de acordo com as configurações";
 
 $_['authentication_url']                           = '%smodule_mercadolivre';
 
@@ -68,6 +81,7 @@ $_['text_ml_status_active']                        = 'Ativo';
 $_['text_ml_status_inactive']                      = 'Inativo';
 $_['text_ml_without_status']                       = 'Sem situação';
 $_['text_without_product_in_ml']                   = 'Sem anúncio no ML';
+$_['text_add_products_in_ml']                      = 'Adicionar Produtos no Mercado Livre';
 
 //Tabs
 $_['tab_general']                            = 'Configs App';
@@ -91,6 +105,7 @@ $_['column_status']          = 'Situação';
 
 //Buttons
 $_['button_back']                       = 'Voltar';
+$_['button_cancel']                     = 'Cancelar';
 $_['button_send']                       = 'Enviar';
 $_['btn_change_category']               = 'Alterar categoria';
 $_['btn_authenticate']                  = 'Autenticar';
@@ -109,6 +124,8 @@ $_['message_error_buying_mode'] = 'Selecione um modo de compra';
 $_['message_error_condition'] = 'Selecione uma condição do produto';
 $_['message_error_price_adjustment'] = 'Contém caracteres inválidos, por favor verifique';
 $_['message_error_extesion_not_configured'] = 'Por favor, configure a extensão primeiro';
+$_['message_error_select_category_or_unselect'] = 'Por favor, selecione uma categoria ou desmarque todas';
+$_['message_error_configs_not_done'] = 'Por favor, configure tudo antes de entrar aqui!';
 
 $_['invalid_question'] = 'Não é possível responder à pergunta.';
 $_['invalid_post_body'] = 'Parâmetros inválidos.';

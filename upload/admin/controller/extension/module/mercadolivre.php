@@ -19,6 +19,12 @@ class ControllerExtensionModuleMercadolivre extends Controller
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
             $this->model_setting_setting->editSetting($this->key_prefix, $this->request->post);
 
+            foreach ($this->request->post['categories'] as $key => $item) {
+                $this->model_extension_module_mercadolivre->editCategory($key, $item);
+            }
+
+            $this->model_extension_module_mercadolivre->editCategory();
+
             $this->session->data['success'] = $this->language->get('text_success');
 
             $this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=module', true));
@@ -124,12 +130,20 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $this->load->model('setting/setting');
         $configs = $this->model_setting_setting->getSetting($this->key_prefix);
 
+        if (!$this->validateConfig($configs)) {
+            $data['warning'] = $this->language->get('message_error_configs_not_done');
+
+            $this->response->redirect($this->url->link('extension/module/mercadolivre', 'user_token=' . $this->session->data['user_token'], true));
+            return;
+        }
+
         $data['consider_special_price'] = $configs['module_mercadolivre_consider_special_price'];
         $data['price_adjustment'] = $configs['module_mercadolivre_price_adjustment'];
         $data['auto_detect_category'] = $configs['module_mercadolivre_auto_detect_category'];
         $data['listing_type'] = $configs['module_mercadolivre_listing_type'];
         $data['with_local_pick_up'] = $configs['module_mercadolivre_shipping_with_local_pick_up'];
         $data['shipping_free'] = $configs['module_mercadolivre_shipping_free'];
+        $data['ml_country'] = $configs['module_mercadolivre_country'];
 
         $this->getList($data);
     }
@@ -159,7 +173,6 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
         $data['cancel'] = $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true);
         $data['disconnect'] = $this->url->link($this->route . '/disconnectProduct', 'user_token=' . $this->session->data['user_token'] . $url, true);
-        $data['addProducts'] = $this->url->link($this->route . '/addProducts', 'user_token=' . $this->session->data['user_token'], true);
         $data['synchronizeStockPrice'] = $this->url->link($this->route . '/synchronizeStockPrice', 'user_token=' . $this->session->data['user_token'], true);
 
         $data['products'] = array();
@@ -267,7 +280,64 @@ class ControllerExtensionModuleMercadolivre extends Controller
     }
 
     public function addProducts() {
+        $this->load->language($this->route);
+        $this->load->model($this->route);
+        $data = array();
 
+        $listing_type = $this->request->post['ml_listing_type'];
+        $product_warranty_type = $this->request->post['ml_product_warranty_type'];
+        $product_warranty_unit = $this->request->post['ml_product_warranty_unit'];
+        $product_warranty = $this->request->post['ml_product_warranty'];
+        $price_adjustment = $this->request->post['ml_price_adjustment'];
+        $products = explode(',', $this->request->post['product_ids']);
+        $category_id = $this->request->post['ml_category'] ?? null;
+
+        //TODO Devolver o erro
+        if (!empty($price_adjustment) && preg_match('/[^0-9+\-><%;]/', $price_adjustment)) {
+            $this->error['error_price_adjustment'] = $this->language->get('message_error_price_adjustment');
+        }
+
+        $this->load->model('catalog/product');
+
+        foreach ($products as $product_id) {
+            if ($product = $this->model_catalog_product->getProduct($product_id)) {
+                $product['product_warranty_type'] = $product_warranty_type;
+                $product['warranty_unit'] = $product_warranty_unit;
+                $product['warranty'] = $product_warranty;
+                $product['price_adjustment'] = $price_adjustment;
+                $product['listing_type'] = $listing_type;
+                $product['category_id'] = $category_id;
+                $product['variations'] = array();
+
+                $product['images'] = $this->model_catalog_product->getProductImages($this->request->get['product_id']);
+                $options = $this->model_catalog_product->getProductOptions($this->request->get['product_id']);
+
+                foreach ($options as $option) {
+                    foreach ($option['product_option_value'] as $option_value) {
+                        $price = 0;
+
+                        $priceWithTax = $this->tax->calculate($option_value['price'], $product['tax_class_id'], $this->config->get('config_tax') ? 'P' : false);
+                        if ($option_value['price_prefix'] == '+') {
+                            $price = $priceWithTax + ($product_info['special'] ?? $product['price']);
+                        } else {
+                            $price = $priceWithTax - ($product_info['special'] ?? $product['price']);
+                        }
+
+                        $product['variations'][] = [
+                            'name' => $option['name'],
+                            'value_name' => $option_value['name'],
+                            'price' => $price,
+                            'quantity' => $option_value['quantity'],
+                            'sku    ' => $option_value['sku']
+                        ];
+                    }
+                }
+
+                $this->setCategoryByConfiguration($category_id, $product_id, $product);
+
+                $result = $this->model_extension_module_mercadolivre->createProductInMl($product);
+            }
+        }
     }
 
     public function synchronizeStockPrice() {
@@ -333,6 +403,13 @@ class ControllerExtensionModuleMercadolivre extends Controller
         }
 
         return !$this->error;
+    }
+
+    private function validateConfig($configs) {
+        return !empty($configs['module_mercadolivre_app_id']) && !empty($configs['module_mercadolivre_app_secret']) &&
+            !empty($configs['module_mercadolivre_authentication_code']) && !empty($configs['module_mercadolivre_shipping_type']) &&
+            !empty($configs['module_mercadolivre_condition']) && !empty($configs['module_mercadolivre_buying_mode']) &&
+            !empty($configs['module_mercadolivre_country']);
     }
 
     private function getCategories($mercadolivre_categories = array())
@@ -407,6 +484,26 @@ class ControllerExtensionModuleMercadolivre extends Controller
     {
         if (isset($this->request->get[$name])) {
             $url .= "&{$name}=" . ($isText ? urlencode(html_entity_decode($this->request->get[$name], ENT_QUOTES, 'UTF-8')) : $this->request->get[$name]);
+        }
+    }
+
+    /**
+     * @param $category_id
+     * @param $product_id
+     * @param $product
+     */
+    private function setCategoryByConfiguration($category_id, $product_id, &$product)
+    {
+        if (empty($category_id)) {
+            $categories = $this->model_catalog_product->getCategories($product_id);
+
+            foreach ($categories as $category) {
+                $result = $this->model_extension_module_mercadolivre->getCategorieMl($category['category_id']);
+
+                if (!empty($result)) {
+                    $product['category_id'] = $result['mercadolivre_category_code'];
+                }
+            }
         }
     }
 }

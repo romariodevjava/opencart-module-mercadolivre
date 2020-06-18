@@ -152,11 +152,10 @@ class Meli {
                 return $request;
             }
         } else {
-            $result = array(
+            return array(
                 'error' => 'Offline-Access is not allowed.',
                 'httpCode'  => null
             );
-            return $result;
         }
     }
 

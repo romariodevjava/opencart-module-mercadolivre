@@ -191,7 +191,7 @@ A modalidade de arremate ("buying_mode"="auction") ainda aparecerá nas APIs de 
                                         <td class="col-sm-8">
                                             {% if category.ml_category %}
                                                 <span class="category-ml-{{ category.category_id }}">
-                                                    <input type="hidden" name="module_mercadolivre_categories[{{ category.category_id }}]" value="{{ category.ml_category }}"/>
+                                                    <input type="hidden" name="categories[{{ category.category_id }}]" value="{{ category.ml_category }}"/>
                                                     <span data-ml-category="{{ category.ml_category }}" class="load-categories"></span>
                                                     <a href="javascript:changeCategory({{ category.category_id }})">{{ btn_change_category }}</a>
                                                 </span>
@@ -290,7 +290,6 @@ A modalidade de arremate ("buying_mode"="auction") ainda aparecerá nas APIs de 
             </div>
         </div>
     </div>
-
     <script type="text/javascript">
         var categories = [];
         $(document).ready(function () {
@@ -362,7 +361,7 @@ A modalidade de arremate ("buying_mode"="auction") ainda aparecerá nas APIs de 
             $column.find('.mercadolivre-categories').each(function (i, v) {
                 if (i > indexSelectCall) {
                     $(v).remove();
-                    $('#col-ml-category' + category_index).find('i').remove();
+                    $column.find('i').remove();
                 }
             });
 
@@ -372,8 +371,8 @@ A modalidade de arremate ("buying_mode"="auction") ainda aparecerá nas APIs de 
 
                 if (json['settings']['listing_allowed']) {
                     var $select = $column.find('.mercadolivre-categories:last');
-                    $select.attr('name', `module_mercadolivre_categories[${category_index}]`);
-                    $('#col-ml-category' + category_index).append('<i class="fa fa-check-circle" style="color: green;font-size: 26px;margin-left: 15px;"></i>');
+                    $select.attr('name', `categories[${category_index}]`);
+                    $column.append('<i class="fa fa-check-circle" style="color: green;font-size: 26px;margin-left: 15px;"></i>');
                 } else {
                     var $select = $('<select class="form-control mercadolivre-categories" style="width: auto; display: initial;"><option>{{ entry_select_left }}</option></select>');
                     $select.on('change', function () {
@@ -381,7 +380,7 @@ A modalidade de arremate ("buying_mode"="auction") ainda aparecerá nas APIs de 
                     });
 
                     createSelectOptions(json['children_categories'], 'id', 'name', $select);
-                    $('#col-ml-category' + category_index).append($select);
+                    $column.append($select);
                 }
             });
         }
