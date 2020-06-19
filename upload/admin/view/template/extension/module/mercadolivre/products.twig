@@ -104,7 +104,7 @@
                                                 </td>
                                                 <td class="text-left">{{ product.status }}</td>
 
-                                                {% if ml_quantity %}
+                                                {% if product.ml_quantity %}
                                                     <td class="text-left">{{ product.ml_id }}</td>
                                                     <td class="text-left">{{ product.ml_quantity }}</td>
                                                     <td class="text-left">
@@ -178,9 +178,9 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label" onchange="changeWarranty(this.value)" for="input-warranty-type">{{ entry_product_warranty_type }}</label>
+                                    <label class="col-sm-3 control-label" for="input-warranty-type">{{ entry_product_warranty_type }}</label>
                                     <div class="col-sm-9">
-                                        <select class="form-control" id="input-warranty-type" name="ml_product_warranty_type">
+                                        <select class="form-control" id="input-warranty-type" name="ml_product_warranty_type" onchange="changeWarranty(this.value)">
                                             <option value="">{{ without_warranty }}</option>
                                             <option value="{{ warranty_of_seller }}">{{ warranty_of_seller }}</option>
                                             <option value="{{ warranty_of_factory }}">{{ warranty_of_factory }}</option>
@@ -188,7 +188,7 @@
                                     </div>
                                 </div>
 
-                                <div class="warranty_div" style="display: none">
+                                <div id="warranty_div" style="display: none">
                                     <div class="form-group">
                                         <label class="col-sm-3 control-label" for="input-warranty-unit">{{ entry_product_warranty_unit }}</label>
                                         <div class="col-sm-9">
@@ -212,6 +212,13 @@
                                     <label class="col-sm-3 control-label" for="input-price-adjustment"><span data-toggle="tooltip" title="{{ help_price_adjustment }}">{{ entry_price_adjustment }}</span></label>
                                     <div class="col-sm-9">
                                         <input type="text" name="ml_price_adjustment" value="{{ price_adjustment }}" placeholder="{{ entry_price_adjustment }}" class="form-control" id="input-price-adjustment"/>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="input-subtract-stock">{{ entry_subtract_product }}</label>
+                                    <div class="col-sm-9">
+                                        <input type="checkbox" name="subtract_product" value="1" placeholder="{{ entry_subtract_product }}" class="form-control" id="input-subtract-stock"/>
                                     </div>
                                 </div>
                             </div>
@@ -241,6 +248,7 @@
             setAutoCompleteProductName();
             loadCategories();
             loadListingsTypes();
+            loadCategoriesTexts();
         });
 
         function changeWarranty(value) {
@@ -289,6 +297,7 @@
                         }
 
                         if (json['success']) {
+                            alert(json['success']);
                             window.location.reload();
                         }
                     },
@@ -410,6 +419,19 @@
 
             $.each(options, function (i, v) {
                 $select.append(`<option value="${v[value]}" ${valueSelected == v[value] ? 'selected' : ''}>${v[description]}</option>`);
+            });
+        }
+
+        function loadCategoriesTexts() {
+            $('.load-categories').each(function (i, v) {
+                var code = $(v).data('ml-category');
+
+                $.getJSON(`https://api.mercadolibre.com/categories/${code}`, function (json) {
+                    var path = json['path_from_root'].reduce(function (i1, i2) {
+                        return {name: i1['name'] + ' -> ' + i2['name']};
+                    });
+                    $(v).text(path['name'] + ' -- ');
+                });
             });
         }
 

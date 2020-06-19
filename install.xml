@@ -28,6 +28,7 @@ $_['text_mercadolivre_orders']              = 'Pedidos';
 $_['text_mercadolivre_questions']           = 'Perguntas';
 $_['text_mercadolivre_products']            = 'Produtos';
 $_['text_mercadolivre']                     = 'Mercado Livre Extensão';
+$_['text_mercadolivre_logs']                = 'Logs';
                   ]]></add>
         </operation>
     </file>
@@ -65,6 +66,12 @@ $_['text_mercadolivre']                     = 'Mercado Livre Extensão';
         $mercadolivre[] = array(
             'name'	   => $this->language->get('text_mercadolivre_products'),
             'href'     => $this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'], true),
+            'children' => array()
+        );
+
+        $mercadolivre[] = array(
+            'name'	   => $this->language->get('text_mercadolivre_logs'),
+            'href'     => $this->url->link('extension/module/mercadolivre/logs', 'user_token=' . $this->session->data['user_token'], true),
             'children' => array()
         );
 

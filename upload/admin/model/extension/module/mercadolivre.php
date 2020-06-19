@@ -10,6 +10,73 @@ class ModelExtensionModuleMercadolivre extends Model
      */
     private static $mlSdk;
     private $key_prefix = 'module_mercadolivre';
+    private $log;
+
+    /**
+     * ModelExtensionModuleMercadolivre constructor.
+     * @param $registry
+     */
+    public function __construct($registry)
+    {
+        $this->registry = $registry;
+        $this->log = new Log('mercadolivre.log');
+    }
+
+    public function getCategoriesByProductId($product_id)
+    {
+        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_to_category` WHERE product_id = '" . (int)$product_id . "'");
+
+        return $query->rows;
+    }
+
+    public function getProduct($product_id)
+    {
+        $query = $this->db->query("SELECT DISTINCT *, pd.name AS name, p.image, m.name AS manufacturer, 
+                (SELECT price FROM `" . DB_PREFIX . "product_discount` pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, 
+                (SELECT price FROM `" . DB_PREFIX . "product_special` ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special,  
+                (SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "review` r2 WHERE r2.product_id = p.product_id AND r2.status = '1' GROUP BY r2.product_id) AS reviews, 
+                p.sort_order FROM `" . DB_PREFIX . "product` p 
+                LEFT JOIN `" . DB_PREFIX . "product_description` pd ON (p.product_id = pd.product_id) 
+                LEFT JOIN `" . DB_PREFIX . "product_to_store` p2s ON (p.product_id = p2s.product_id) 
+                LEFT JOIN `" . DB_PREFIX . "manufacturer` m ON (p.manufacturer_id = m.manufacturer_id) 
+                WHERE p.product_id = '" . (int)$product_id . "' 
+                AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' 
+                AND p.status = '1' AND p.date_available <= NOW() 
+                AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+
+        if ($query->num_rows) {
+            return array(
+                'product_id' => $query->row['product_id'],
+                'name' => $query->row['name'],
+                'description' => $query->row['description'],
+                'tag' => $query->row['tag'],
+                'model' => $query->row['model'],
+                'sku' => $query->row['sku'],
+                'ncm' => $query->row['ncm'],
+                'cest' => $query->row['cest'],
+                'upc' => $query->row['upc'],
+                'ean' => $query->row['ean'],
+                'jan' => $query->row['jan'],
+                'isbn' => $query->row['isbn'],
+                'mpn' => $query->row['mpn'],
+                'quantity' => $query->row['quantity'],
+                'shipping' => $query->row['shipping'],
+                'image' => $query->row['image'],
+                'manufacturer_id' => $query->row['manufacturer_id'],
+                'manufacturer' => $query->row['manufacturer'],
+                'price' => ($query->row['discount'] ? $query->row['discount'] : $query->row['price']),
+                'special' => $query->row['special'],
+                'date_available' => $query->row['date_available'],
+                'weight' => $query->row['weight'],
+                'length' => $query->row['length'],
+                'width' => $query->row['width'],
+                'height' => $query->row['height'],
+                'status' => $query->row['status']
+            );
+        } else {
+            return false;
+        }
+    }
 
     public function criarTabelas()
     {
@@ -19,6 +86,7 @@ class ModelExtensionModuleMercadolivre extends Model
 			  `condition` varchar(15) NOT NULL,
 			  `product_id` int(11) NOT NULL,
 			  `listing_type_id` varchar(15) NOT NULL,
+			  `subtract_product` tinyint(1) NULL,
 			  `mercadolivre_category_id` varchar(15) NOT NULL,
 			  `status` varchar(15) NOT NULL,
 			  `created_at` datetime NOT NULL,
@@ -30,9 +98,11 @@ class ModelExtensionModuleMercadolivre extends Model
 			  `mercadolivre_variation_id` int(11) NOT NULL AUTO_INCREMENT,
 			  `ml_variation_code` int(11) NOT NULL,
 			  `option_value_id` int(11) NOT NULL,
+			  `mercadolivre_products_id` int(11) NOT NULL,
 			  `created_at` datetime NOT NULL,
 			  PRIMARY KEY (`mercadolivre_variation_id`),
-			  FOREIGN KEY (option_value_id) REFERENCES " . DB_PREFIX . "option_value (option_value_id)
+			  FOREIGN KEY (option_value_id) REFERENCES " . DB_PREFIX . "option_value (option_value_id),
+			  FOREIGN KEY (mercadolivre_products_id) REFERENCES " . DB_PREFIX . "mercadolivre_products (mercadolivre_products_id)
           ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 
         $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "mercadolivre_categories` (
@@ -110,15 +180,19 @@ class ModelExtensionModuleMercadolivre extends Model
         $this->db->query("DROP TABLE `" . DB_PREFIX . "mercadolivre_products`");
     }
 
+    public function revokeAuthentication() {
+        $this->db->query("DELETE FROM " . DB_PREFIX . "setting WHERE `store_id` = '0' AND `key` = 'module_mercadolivre_authentication_code'");
+    }
+
     public function getCategories($parent_id = 0)
     {
         $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category` c LEFT JOIN `" . DB_PREFIX . "category_description` cd ON (c.category_id = cd.category_id) LEFT JOIN `" . DB_PREFIX . "category_to_store` c2s ON (c.category_id = c2s.category_id) WHERE c.parent_id = '" . (int)$parent_id . "' AND cd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND c2s.store_id = '" . (int)$this->config->get('config_store_id') . "'  AND c.status = '1' ORDER BY c.sort_order, LCASE(cd.name)");
         return $query->rows;
     }
 
-    public function getProduct($product_id)
+    public function getProductML($product_id)
     {
-        $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_products` WHERE `product_id` = '" . ($product_id) . "'");
+        $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_products` WHERE `product_id` = '" . (int)$product_id . "'");
 
         return $result->rows;
     }
@@ -128,12 +202,21 @@ class ModelExtensionModuleMercadolivre extends Model
         $request = $this->createRequestForCreateAds($product);
         $this->prepareForRequest();
         $response = self::$mlSdk->post('items', $request);
+        $this->treatResponse($response, 'items', $request);
 
-        $this->db->query('INSERT INTO `' . DB_PREFIX . "mercadolivre_products` SET `ml_product_code` = '" . $this->db->escape($response->id) ."', `condition` = '" .
-            $this->db->escape($response->condition) ."', `product_id` = '" . $product['product_id'] . "', `listing_type_id` = '" . $this->db->escape($response->listing_type_id) .
-            "', `mercadolivre_category_id` = '" . $this->db->escape($response->category_id) . "', `created_at` = NOW()");
+        $this->db->query('INSERT INTO `' . DB_PREFIX . "mercadolivre_products` SET `ml_product_code` = '" . $this->db->escape($response['body']->id) ."', `condition` = '" .
+            $this->db->escape($response['body']->condition) ."', `product_id` = '" . $product['product_id'] . "', `listing_type_id` = '" . $this->db->escape($response['body']->listing_type_id) .
+            "', `mercadolivre_category_id` = '" . $this->db->escape($response['body']->category_id) . "', `status` = '" . $response['body']->status . "', `subtract_product` = '" . (int) $product['subtract_product'] . "', `created_at` = NOW()");
 
-
+        $product_ml_id = $this->db->getLastId();
+        foreach ($response['body']->variations as $variation) {
+            foreach ($variation['attributes'] as $attribute) {
+                if ($attribute['id'] == 'SELLER_SKU') {
+                    $key = array_search($attribute['value_name'], array_column($product['variations'], 'sku'));
+                    $this->db->query('INSERT INTO `' . DB_PREFIX . "mercadolivre_variations` SET `mercadolivre_products_id` = '" . $product_ml_id . "' `ml_variation_code` = '" . (int) $variation['id'] . "', `option_value_id` = '" . $product['variations'][$key]['sku'] . "', `created_at` = NOW()");
+                }
+            }
+        }
     }
 
     private function createRequestForCreateAds($product)
@@ -163,19 +246,19 @@ class ModelExtensionModuleMercadolivre extends Model
                 ],
                 [
                     'id' => 'PACKAGE_HEIGHT',
-                    'value_name' => $product['height'] . ' cm'
+                    'value_name' => intval($product['height']) . ' cm'
                 ],
                 [
                     'id' => 'PACKAGE_WIDTH',
-                    'value_name' => $product['width'] . ' cm'
+                    'value_name' => intval($product['width']) . ' cm'
                 ],
                 [
                     'id' => 'PACKAGE_LENGTH',
-                    'value_name' => $product['length'] . ' cm'
+                    'value_name' => intval($product['length']) . ' cm'
                 ],
                 [
                     'id' => 'PACKAGE_WEIGHT',
-                    'value_name' => $product['weight'] . ' kg'
+                    'value_name' => floatval($product['weight']) . ' kg'
                 ]
             ]
         ];
@@ -223,7 +306,8 @@ class ModelExtensionModuleMercadolivre extends Model
             $description = str_replace($find, $replace, $this->config->get('module_mercadolivre_template_description'));
         }
         $description = strip_tags(html_entity_decode($description), '<br><p><li>');
-        $description = preg_replace("/<p\s(.+?)>(.+?)<\/p>/is", "\n$2\n", $description);
+        $description = preg_replace("/<p\s(.+?)>(.+?)<\/p>/is", "$2\n\n", $description);
+        $description = preg_replace("/<p>(.+?)<\/p>/is", "$1\n\n", $description);
         $description = preg_replace("/<br>/is", "\n\n", $description);
         $description = preg_replace("/<li\s(.+?)>(.+?)<\/li>/is", "$2\n", $description);
 
@@ -245,10 +329,10 @@ class ModelExtensionModuleMercadolivre extends Model
                 $newPrice = $this->calculePrice($price, $steps[0]);
             }
 
-            if ($newPrice != $price) return $newPrice;
+            if ($newPrice != $price) return number_format($newPrice, 2, '.', '');
         }
 
-        return $price;
+        return number_format($price, 2, '.', '');
     }
 
     private function calculePriceWithCondition($price, $steps)
@@ -266,6 +350,10 @@ class ModelExtensionModuleMercadolivre extends Model
     private function calculePrice($price, $operationWithValue)
     {
         preg_match('/(\d%|\d)(?:\s*)(?:\+)(?:\s*)(\d%+|\d+)/i', $operationWithValue, $output_array);
+        if (empty($output_array)) {
+            $output_array = [1 => $operationWithValue];
+        }
+
         $newPrice = $price;
 
         foreach ($output_array as $key => $item) {
@@ -286,7 +374,7 @@ class ModelExtensionModuleMercadolivre extends Model
     {
         if (!empty($warranty_type)) {
             $request['sale_terms'] = [
-                ['id' => 'WARRANTY_TYPE', 'value_name' => $warranty_unit],
+                ['id' => 'WARRANTY_TYPE', 'value_name' => $warranty_type],
                 ['id' => 'WARRANTY_TIME', 'value_name' => $warranty . ' ' . $warranty_unit]
             ];
         }
@@ -370,6 +458,7 @@ class ModelExtensionModuleMercadolivre extends Model
         if ($refreshToken == null) {
             $redirect_uri = sprintf($this->language->get('authentication_url'), HTTPS_CATALOG);
             $response = self::$mlSdk->authorize($this->config->get('module_mercadolivre_authentication_code'), $redirect_uri);
+            $this->treatResponse($response, '/oauth/token');
             $expire_at = time() + ($response["body"]->expires_in - 10);
 
             $this->registerOauthAttributes($response["body"]->access_token, $response["body"]->refresh_token, $expire_at);
@@ -377,6 +466,7 @@ class ModelExtensionModuleMercadolivre extends Model
 
         if ($expire_at <= time()) {
             $response = self::$mlSdk->refreshAccessToken();
+            $this->treatResponse($response, '/oauth/token');
             $this->registerOauthAttributes($response["body"]->access_token, $response["body"]->refresh_token, $expire_at);
         }
     }
@@ -391,18 +481,26 @@ class ModelExtensionModuleMercadolivre extends Model
         $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix . "', `key` = 'module_mercadolivre_expire_at', `value` = '" . $this->db->escape($expireAt) . "'");
     }
 
-    public
-    function getCategorieMl($category_id)
+    public function getCategorieMl($category_id)
     {
         $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_categories` WHERE `category_id` = '" . ($category_id) . "'");
 
         return $result->rows;
     }
 
-    public
-    function editCategory($category_id, $category_code_ml)
+    public function editCategory($category_id, $category_code_ml)
     {
         $this->db->query('DELETE FROM `' . DB_PREFIX . "mercadolivre_categories`");
         $this->db->query('INSERT INTO `' . DB_PREFIX . "mercadolivre_categories` SET `category_id` = '" . ($category_id) . "', `mercadolivre_category_code` = '" . $category_code_ml . "', `created_at`= NOW()");
+    }
+
+    public function treatResponse($response, $path, $request = array()) {
+        if ($response['httpCode'] >= 400 || (isset($response['body']->status) && $response['body']->status >= 400)) {
+            $this->log->write('PATH: ' . $path);
+            $this->log->write('REQUEST: ' . json_encode($request));
+            $this->log->write('RESPONSE: ' . json_encode($response));
+
+            throw new Exception($response['body']->message);
+        }
     }
 }

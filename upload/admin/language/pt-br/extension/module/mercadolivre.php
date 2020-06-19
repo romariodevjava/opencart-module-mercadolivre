@@ -3,6 +3,7 @@
 $_['heading_title']                          = 'Integração Mercado Livre';
 $_['heading_title_authentication']           = 'Autenticação da Aplicação no Mercado Livre';
 $_['heading_title_products']                 = 'Gerenciamento de Produtos no Mercado Livre';
+$_['heading_title_logs']                     = 'Logs do Mercado Livre';
 
 // Text
 $_['text_extension']          = 'Extensões';
@@ -52,6 +53,7 @@ $_['without_warranty']                 = 'Sem Garantia';
 $_['entry_month']                      = 'meses';
 $_['entry_days']                       = 'dias';
 $_['entry_years']                      = 'anos';
+$_['entry_subtract_product']           = 'Subtrair estoque ao realizar uma venda no ML?';
 
 
 
@@ -59,7 +61,7 @@ $_['entry_years']                      = 'anos';
 $_['help_auto_detect_category']        = 'Faz a atribuição automática da categoria do produto no Mercado Livre pelo título';
 $_['help_app_secret']                  = 'App Secret da aplicação criada no Mercado Livre';
 $_['help_shipping_free']               = 'Ofereça frete grátis aos seus compradores com o mercado envios, veja as políticas do mercado envio';
-    $_['help_price_adjustment']            = "Ajuste de preços antes de enviar para o Mercado Livre, poder ser em unidades(moeda) ou porcentagem(%), Exemplo: 20.00 ou 5%. Tambem pode ser usado condições como: '>500:5%;>600:5%+5;<500:5;>=500:200+5%', onde cada ';' é uma condição, '>' valor do produto maior que o valor especificado, '<' valor do produto menor que o valor especificado, '>=' maior ou igual ao valor do produto, '<=' menor ou igual ao valor do produto, '+' soma dois ou mais valores em cima do valor do produto, '-' subtrai dois ou mais valores em cima do valor do produto";
+$_['help_price_adjustment']            = "Ajuste de preços antes de enviar para o Mercado Livre, poder ser em unidades(moeda) ou porcentagem(%), Exemplo: 20.00 ou 5%. Tambem pode ser usado condições como: '>500:5%;>600:5%+5;<500:5;>=500:200+5%', onde cada ';' é uma condição, '>' valor do produto maior que o valor especificado, '<' valor do produto menor que o valor especificado, '>=' maior ou igual ao valor do produto, '<=' menor ou igual ao valor do produto, '+' soma dois ou mais valores em cima do valor do produto, '-' subtrai dois ou mais valores em cima do valor do produto";
 $_['help_template_title']              = "Máximo de 60 caracteres. chaves reservadas disponiveís __TITLE__ , __MODEL__ , __SKU__ , __BRAND__ , __ISBN__ and __MPN__";
 $_['help_template_description']        = "chaves reservadas disponiveís __TITLE__ , __DESCRIPTION__ , __MODEL__ , __SKU__ , __BRAND__ , __ISBN__ e __MPN__";
 $_['help_image_additional']            = "Imagem a ser adicionada por último no produto";
@@ -82,6 +84,7 @@ $_['text_ml_status_inactive']                      = 'Inativo';
 $_['text_ml_without_status']                       = 'Sem situação';
 $_['text_without_product_in_ml']                   = 'Sem anúncio no ML';
 $_['text_add_products_in_ml']                      = 'Adicionar Produtos no Mercado Livre';
+$_['text_products_add_success']                    = 'Produtos adicionados ao Mercado Livre';
 
 //Tabs
 $_['tab_general']                            = 'Configs App';
@@ -105,6 +108,7 @@ $_['column_status']          = 'Situação';
 
 //Buttons
 $_['button_back']                       = 'Voltar';
+$_['button_revoke_authentication']      = 'Revogar autenticação';
 $_['button_cancel']                     = 'Cancelar';
 $_['button_send']                       = 'Enviar';
 $_['btn_change_category']               = 'Alterar categoria';
@@ -126,6 +130,7 @@ $_['message_error_price_adjustment'] = 'Contém caracteres inválidos, por favor
 $_['message_error_extesion_not_configured'] = 'Por favor, configure a extensão primeiro';
 $_['message_error_select_category_or_unselect'] = 'Por favor, selecione uma categoria ou desmarque todas';
 $_['message_error_configs_not_done'] = 'Por favor, configure tudo antes de entrar aqui!';
+$_['message_log_error_warning']    = 'Aviso: Seu arquivo de log %s é %s!';
 
 $_['invalid_question'] = 'Não é possível responder à pergunta.';
 $_['invalid_post_body'] = 'Parâmetros inválidos.';

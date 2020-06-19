@@ -188,9 +188,7 @@ class Meli {
             CURLOPT_POSTFIELDS => $body
         );
 
-        $exec = $this->execute($path, $opts, $params);
-
-        return $exec;
+        return $this->execute($path, $opts, $params);
     }
 
     /**
@@ -258,6 +256,10 @@ class Meli {
      * @return mixed
      */
     public function execute($path, $opts = array(), $params = array(), $assoc = false) {
+        if (!empty($this->access_token)) {
+            $params = array_merge($params, ['access_token' => $this->access_token]);
+        }
+
         $uri = $this->make_path($path, $params);
 
         $ch = curl_init($uri);

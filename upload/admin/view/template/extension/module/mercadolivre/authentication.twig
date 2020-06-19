@@ -48,6 +48,12 @@
                             </div>
                         {% else %}
                             <div class="alert alert-success"><i class="fa fa-info-circle"></i>{{ text_autheticated }}</div>
+                            <br/>
+                            <form action="{{ revoke }}" method="post">
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-danger">{{ button_revoke_authentication }}</button>
+                                </div>
+                            </form>
                         {% endif %}
                     {% endif %}
                 </div>
