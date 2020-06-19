@@ -46,11 +46,11 @@ Achou e corrigiu um bug ou tem alguma feature em mente e deseja contribuir?
 - [X] Configuração
 - [X] Exportar produtos para o Mercado Livre - **Em testes**
 - [ ] Atualizar os produtos e variações a cada edição no produto
-- [ ] Excluir desativar e excluir produto no Mercado Livre, quando excluído no OpenCart
+- [ ] Desativar e excluir produto no Mercado Livre, quando excluído no OpenCart
 - [ ] Notificar as perguntas no OpenCart e ter a opção de responder
 - [ ] Notificar e exibir pedidos do Mercado Livre no OpenCart
 - [X] Mapeamento das categorias do OpenCart x Mercado livre
-- [X] Tela de logs para acompanha quaisquer erros.
+- [X] Tela de logs para acompanhar quaisquer erros.
 
 ## License
 
