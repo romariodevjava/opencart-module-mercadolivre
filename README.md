@@ -8,6 +8,9 @@ O desenvolvimento desde módulo é para uso da comunidade, peço a gentileza que
 Vamos trabalhar para ter mais módulos OpenSource, já que a Plataforma nasceu com este propósito!
 
 # Instalando
+Antes de tudo, crie a sua aplicação em https://developers.mercadolivre.com.br/devcenter, na tela de autenticação, terá as URLs para você configurar o seu app do ML.
+Não se esqueça de habilitar os topicos de notificação: 'questions' e 'orders_`v2'. A aplicação deverá ter os seguintes escopos ativados: 'read', 'offline access' e 'write'
+
 1. Faça o download da ultima versão de release
 2. Abra o seu admin do OpenCart -> Extensões -> Instalador -> Faça o upload do arquivo baixado
 3. Atualize as modificações. Abra o seu admin do OpenCart -> Extensões -> Modificações -> Atualizar
@@ -44,11 +47,12 @@ Achou e corrigiu um bug ou tem alguma feature em mente e deseja contribuir?
 
 # Features do módulo
 - [X] Configuração
-- [ ] Exportar produtos para o Mercado Livre - **Em andamento**
-- [ ] Atualizar os produtos e variações a cada edição no produto
-- [ ] Excluir desativar e excluir produto no Mercado Livre, quando excluído no OpenCart
-- [ ] Notificar as perguntas no OpenCart e ter a opção de responder
-- [ ] Notificar e exibir pedidos do Mercado Livre no OpenCart
+- [X] Exportar produtos para o Mercado Livre 
+- [ ] Atualizar os produtos e variações a cada edição no produto - Futuro
+- [X] Excluir desativar e excluir produto no Mercado Livre, quando excluído no OpenCart
+- [X] Enviar mensagem automáticamente no pós-venda
+- [X] Notificar as perguntas no OpenCart e ter a opção de responder
+- [X] Notificar e exibir pedidos do Mercado Livre no OpenCart
 - [X] Mapeamento das categorias do OpenCart x Mercado livre
 
 ## License
