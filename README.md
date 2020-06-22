@@ -54,6 +54,7 @@ Achou e corrigiu um bug ou tem alguma feature em mente e deseja contribuir?
 - [X] Notificar as perguntas no OpenCart e ter a opção de responder
 - [X] Notificar e exibir pedidos do Mercado Livre no OpenCart
 - [X] Mapeamento das categorias do OpenCart x Mercado livre
+- [X] Tela de logs para acompanhar quaisquer erros.
 
 ## License
 
