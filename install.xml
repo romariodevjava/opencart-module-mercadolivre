@@ -5,6 +5,17 @@
     <author>Romário Pires</author>
     <code>mercadolivre</code>
     <link>romario.ne@hotmail.com</link>
+
+
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search><![CDATA[$product_option_value['subtract'],]]></search>
+            <add position="after"><![CDATA[
+                	'image'                => $product_option_value['image'],
+      ]]></add>
+        </operation>
+    </file>
+
     <file path="catalog/controller/startup/seo_url.php">
         <operation>
             <search><![CDATA[$this->request->get['route'] = 'error/not_found';]]></search>

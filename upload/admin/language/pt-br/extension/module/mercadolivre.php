@@ -4,6 +4,8 @@ $_['heading_title']                          = 'Integração Mercado Livre';
 $_['heading_title_authentication']           = 'Autenticação da Aplicação no Mercado Livre';
 $_['heading_title_products']                 = 'Gerenciamento de Produtos no Mercado Livre';
 $_['heading_title_logs']                     = 'Logs do Mercado Livre';
+$_['heading_title_questions']                = 'Perguntas do Mercado Livre';
+$_['heading_title_orders']                   = 'Pedidos do Mercado Livre';
 
 // Text
 $_['text_extension']          = 'Extensões';
@@ -54,6 +56,14 @@ $_['entry_month']                      = 'meses';
 $_['entry_days']                       = 'dias';
 $_['entry_years']                      = 'anos';
 $_['entry_subtract_product']           = 'Subtrair estoque ao realizar uma venda no ML?';
+$_['entry_answered']                   = 'Respondidas';
+$_['entry_no_reply']                   = 'Sem responder';
+$_['entry_expiration_date']            = 'Data de expiração';
+$_['entry_creation_date']              = 'Data de criação';
+$_['entry_questions']                  = 'Perguntas';
+$_['entry_variations']                 = 'Variações';
+$_['entry_without_product_related']    = 'Sem produto relacionado';
+$_['entry_subtract_product']           = 'Subtrair estoque ao realizar uma venda no ML?';
 
 
 
@@ -84,7 +94,24 @@ $_['text_ml_status_inactive']                      = 'Inativo';
 $_['text_ml_without_status']                       = 'Sem situação';
 $_['text_without_product_in_ml']                   = 'Sem anúncio no ML';
 $_['text_add_products_in_ml']                      = 'Adicionar Produtos no Mercado Livre';
+$_['text_order_products']                          = 'Produtos do pedido ML';
+$_['text_reply_question_in_ml']                    = 'Responder pergunta do Mercado Livre';
 $_['text_products_add_success']                    = 'Produtos adicionados ao Mercado Livre';
+$_['text_deleted_with_success']                    = 'Produtos deletados com sucesso.';
+$_['text_paused_with_success']                     = 'Produtos pausados com sucesso.';
+$_['text_activated_with_success']                  = 'Produtos ativados com sucesso.';
+$_['text_no_items_deleted']                        = 'Nenhum produto foi deletado, pois não está vinculado ao ML.';
+$_['text_no_items_paused']                         = 'Nenhum produto foi pausado, pois não está vinculado ao ML.';
+$_['text_no_items_activated']                      = 'Nenhum produto foi pausado, pois não está vinculado ao ML.';
+$_['text_stock_and_price_updated']                 = 'Estoque e preços atualizados com sucesso.';
+$_['text_warnig_notification']                     = 'Configure o seu aplicativo com a URL a seguir, para receber as notificações corretamente: ';
+$_['text_question_deleted_with_success']           = 'Pergunta deletada com sucesso.';
+$_['text_order_deleted_with_success']              = 'Pedido deletado com sucesso.';
+$_['text_no_question_deleted']                     = 'Nenhuma pergunta deletada.';
+$_['text_no_order_deleted']                        = 'Nenhuma pedido deletado.';
+$_['text_question_no_answered']                    = 'Pergunta não respondida.';
+$_['text_question_answered']                       = 'Pergunta respondida com sucesso.';
+$_['text_no_question_deleted']                     = 'Nenhuma pergunta deletada.';
 
 //Tabs
 $_['tab_general']                            = 'Configs App';
@@ -105,16 +132,27 @@ $_['column_image']           = 'Imagem';
 $_['column_name']            = 'Produto';
 $_['column_quantity']        = 'Quantidade';
 $_['column_status']          = 'Situação';
+$_['column_question']        = 'Pergunta';
+$_['column_answer']          = 'Resposta';
+$_['column_mercadolivre_order_id']          = 'Id pedido ML';
+$_['column_customer_name']             = 'Nome do cliente';
+$_['column_customer_document']             = 'Documento do cliente';
+$_['column_mercadolivre_order_total']             = 'Valor do pedido';
 
 //Buttons
 $_['button_back']                       = 'Voltar';
 $_['button_revoke_authentication']      = 'Revogar autenticação';
 $_['button_cancel']                     = 'Cancelar';
 $_['button_send']                       = 'Enviar';
+$_['button_reply']                      = 'Responder';
 $_['btn_change_category']               = 'Alterar categoria';
 $_['btn_authenticate']                  = 'Autenticar';
 $_['button_disconnect']                 = 'Desconectar';
+$_['button_active']                     = 'Ativar';
+$_['button_pause']                      = 'Pausar';
 $_['button_add']                        = 'Adicionar ao Mercado Livre';
+$_['button_delete']                     = 'Apagar';
+$_['button_order_products']             = 'Ver produtos do pedido';
 $_['button_synchronize_stock_price']    = 'Sicronizar preço e estoque';
 
 // Errors
@@ -126,10 +164,11 @@ $_['message_error_listing_type'] = 'Selecione um tipo de listagem a ser aplicado
 $_['message_error_currency'] = 'Selecione uma moeda local';
 $_['message_error_buying_mode'] = 'Selecione um modo de compra';
 $_['message_error_condition'] = 'Selecione uma condição do produto';
-$_['message_error_price_adjustment'] = 'Contém caracteres inválidos, por favor verifique';
+$_['message_error_price_adjustment'] = 'As regras de ajuste de preço contém caracteres inválidos, por favor verifique';
 $_['message_error_extesion_not_configured'] = 'Por favor, configure a extensão primeiro';
 $_['message_error_select_category_or_unselect'] = 'Por favor, selecione uma categoria ou desmarque todas';
 $_['message_error_configs_not_done'] = 'Por favor, configure tudo antes de entrar aqui!';
+$_['message_error_answer']          = 'Por favor, para enviar uma resposta, escreva uma mensagem!';
 $_['message_log_error_warning']    = 'Aviso: Seu arquivo de log %s é %s!';
 
 $_['invalid_question'] = 'Não é possível responder à pergunta.';
@@ -138,3 +177,11 @@ $_['invalid_post_body'] = 'Parâmetros inválidos.';
 //status
 $_['question_unanswered'] = 'Não respondida';
 $_['question_answered'] = 'Respondida';
+
+$_['order_status_confirmed']                = 'Pedido criado';
+$_['order_status_payment_required']         = 'Aguardando pagamento';
+$_['order_status_payment_in_process']       = 'Aguardando confirmação do pagamento';
+$_['order_status_partially_paid']   = 'Pedido com valor parcialmente pago';
+$_['order_status_paid']             = 'Pedido pago';
+$_['order_status_cancelled']        = 'Pedido cancelado';
+$_['order_status_invalid']          = 'Pedido inválido';

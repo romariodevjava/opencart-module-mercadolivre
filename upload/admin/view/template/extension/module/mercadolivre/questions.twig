@@ -1,0 +1,213 @@
+{{ header }} {{ column_left }}
+<div id="content">
+
+    <div class="page-header">
+        <div class="container-fluid">
+
+            <div class="pull-right">
+                <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
+                <button type="button" data-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger" onclick="confirm('{{ text_confirm }}') ? $('#form-question').submit() : false;"><i class="fa fa-trash"></i></button>
+            </div>
+
+            <h1>{{ heading_title }}</h1>
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                    <li><a href="{{ breadcrumb.href }} ">{{ breadcrumb.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        {% if error_warning %}
+            <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+                <button type="button" class="close" data-dismiss="alert">&times</button>
+            </div>
+        {% endif %}
+
+        {% if success %}
+            <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+
+        <div class="row">
+
+            <div id="filter-product" class="col-md-3 col-md-push-9 col-sm-12 hidden-sm hidden-xs">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-filter"></i> {{ text_filter }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="control-label" for="input-question">{{ entry_questions }}</label>
+                            <select name="filter_question" id="input-question" class="form-control">
+                                <option value=""></option>
+                                <option value="1" {{ filter_question == '1' ? 'selected' : '' }}>{{ entry_answered }}</option>
+                                <option value="0" {{ filter_question == '0' ? 'selected' : '' }}>{{ entry_no_reply }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group text-right">
+                            <button type="button" id="button-filter" onclick="filterQuestion()" class="btn btn-default"><i class="fa fa-filter"></i> {{ button_filter }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9 col-md-pull-3 col-sm-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-list"></i> {{ text_list }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{{ delete }}" method="post" enctype="multipart/form-data" id="form-question">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                    <tr>
+                                        <td style="width: 1px;" class="text-center"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', this.checked);"/></td>
+                                        <td class="text-left">{{ column_question }}</td>
+                                        <td class="text-left">{{ column_name }}</td>
+                                        <td class="text-left">{{ column_answer }}</td>
+                                        <td class="text-right">{{ column_action }}</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% if questions %}
+                                    {% for question in questions %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="selected[]" value="{{ question.mercadolivre_question_id }}" {{ question.mercadolivre_question_id in selected ? 'checked' : '' }} />
+                                        </td>
+                                        <td class="text-left">{{ question.question }}</td>
+                                        <td class="text-left">{{ question.product_name }}</td>
+                                        <td class="text-left">{{ question.answer }} </td>
+                                        <td class="text-right">
+                                            {% if not question.answered %}
+                                                <a href="javascript:sendAnwer('{{ question.mercadolivre_question_id }}', '{{ question.question }}')" data-toggle="tooltip" title="{{ button_reply }}" class="btn btn-primary"><i class="fa fa-mail-reply"></i></a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td class="text-center" colspan="5">{{ text_no_results }}</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                        <div class="row">
+                            <div class="col-sm-6 text-left">{{ pagination }}</div>
+                            <div class="col-sm-6 text-right">{{ results }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" id="modalReplyML">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">{{ text_reply_question_in_ml }}</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <form class="form-horizontal" onsubmit="return false;" id="send_question">
+                        <div class="row">
+
+                            <h3>{{ column_question }}: </h3> <span id="question"></span>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-answer"><span data-toggle="tooltip">{{ column_answer }}</span></label>
+                                <div class="col-sm-9">
+                                    <textarea name="ml_answer" class="form-control" id="input-answer" rows="4" maxlength="350"></textarea>
+                                    <input type="hidden" id="question_id" name="ml_question_id" />
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="sendMessage();" id="btn-add-send" data-loading-text="{{ text_loading }}">{{ button_send }}</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ button_cancel }}</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function sendAnwer(mercadolivre_question_id, question) {
+        $('#question_id').val(mercadolivre_question_id);
+        $('#question').text(question);
+        $('#modalReplyML').modal('show');
+    }
+    
+    function sendMessage() {
+        var $form = $(document.forms.send_question);
+        var body = $form.serializeArray();
+
+        if (validateForm(body)) {
+            $.ajax({
+                url: 'index.php?route=extension/module/mercadolivre/addAnswer&user_token={{ user_token }}',
+                type: 'post',
+                dataType: 'json',
+                data: body,
+                beforeSend: function () {
+                    $('#btn-add-send').button('loading');
+                },
+                complete: function () {
+                    $('#btn-add-send').button('reset');
+                },
+                success: function (json) {
+                    if (json['error']) {
+                        alert(json['error']);
+                    }
+
+                    if (json['success']) {
+                        alert(json['success']);
+                        window.location.reload();
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    }
+
+    function filterQuestion() {
+        url = '{{ constant('HTTPS_SERVER') }}index.php?route=extension/module/mercadolivre/questions&user_token={{ user_token }}';
+
+        var filter_question = $('select[name=\'filter_question\']').val();
+        if (filter_question) {
+            url += '&filter_question=' + encodeURIComponent(filter_question);
+        }
+
+        window.location = url;
+    }
+
+    function validateForm(body) {
+        if (body['ml_answer'] == '') {
+            alert('{{ message_error_answer }}');
+            return false;
+        }
+
+        return true;
+    }
+
+</script>
+{{ footer }}
