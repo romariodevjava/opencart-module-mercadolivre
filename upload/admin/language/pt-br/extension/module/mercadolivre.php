@@ -62,6 +62,7 @@ $_['entry_expiration_date']            = 'Data de expiração';
 $_['entry_creation_date']              = 'Data de criação';
 $_['entry_questions']                  = 'Perguntas';
 $_['entry_variations']                 = 'Variações';
+$_['entry_product_name']               = 'Nome do produto';
 $_['entry_without_product_related']    = 'Sem produto relacionado';
 $_['entry_subtract_product']           = 'Subtrair estoque ao realizar uma venda no ML?';
 

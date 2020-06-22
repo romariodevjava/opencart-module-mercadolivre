@@ -278,6 +278,9 @@ class ModelExtensionModuleMercadolivre extends Model
         $description = preg_replace("/<br>/is", "\n\n", $description);
         $description = preg_replace("/<li\s(.+?)>(.+?)<\/li>/is", "$2\n", $description);
         $description = preg_replace("/<li>(.+?)<\/li>/is", "$1\n", $description);
+        $description = preg_replace('/(\n){3,}/', "\n\n", $description);
+        $description = preg_replace('/<p>/is', "\n", $description);
+        $description = preg_replace('/<\/p>/is', "\n", $description);
 
         return $description;
     }
@@ -691,10 +694,14 @@ class ModelExtensionModuleMercadolivre extends Model
         return $result->row;
     }
 
-    public function editCategory($category_id, $category_code_ml)
+    public function addCategory($category_id, $category_code_ml)
+    {
+        $this->db->query('INSERT INTO `' . DB_PREFIX . "mercadolivre_categories` SET `category_id` = '" . ($category_id) . "', `mercadolivre_category_code` = '" . $category_code_ml . "', `created_at`= NOW()");
+    }
+
+    public function deleteCategories()
     {
         $this->db->query('DELETE FROM `' . DB_PREFIX . "mercadolivre_categories`");
-        $this->db->query('INSERT INTO `' . DB_PREFIX . "mercadolivre_categories` SET `category_id` = '" . ($category_id) . "', `mercadolivre_category_code` = '" . $category_code_ml . "', `created_at`= NOW()");
     }
 
     public function getTotalOrders($data = array()) {
