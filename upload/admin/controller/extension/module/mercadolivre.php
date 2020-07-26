@@ -1,5 +1,7 @@
 <?php
 include 'mercadolivre_modules/Meli.php';
+include 'mercadolivre_modules/Html2TextException.php';
+include 'mercadolivre_modules/Html2Text.php';
 
 class ControllerExtensionModuleMercadolivre extends Controller
 {
@@ -90,6 +92,8 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
     private function validate()
     {
+        $this->validatePermission();
+
         if (!$this->user->hasPermission('modify', $this->route)) {
             $this->error['warning'] = $this->language->get('error_permission_message');
         }
@@ -134,7 +138,15 @@ class ControllerExtensionModuleMercadolivre extends Controller
         return !$this->error;
     }
 
-    private function createBreadcrumbs() {
+    private function validatePermission()
+    {
+        if (!$this->user->hasPermission('modify', $this->route)) {
+            $this->error['warning'] = $this->language->get('error_permission_message');
+        }
+    }
+
+    private function createBreadcrumbs()
+    {
         $breadcrumbs = array();
 
         $breadcrumbs[] = array(
@@ -189,12 +201,18 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $data['footer'] = $this->load->controller('common/footer');
     }
 
-    public function revoke() {
+    public function revoke()
+    {
         $this->load->language($this->route);
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $this->load->model($this->route);
             $this->model_extension_module_mercadolivre->revokeAuthentication();
+        }
+
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
         }
 
         $this->response->redirect($this->url->link('extension/module/mercadolivre/authentication', 'user_token=' . $this->session->data['user_token'], true));
@@ -207,6 +225,11 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $this->document->setTitle($this->language->get('heading_title_authentication'));
 
         $this->load->model('setting/setting');
+
+        if (isset($this->session->data['warning'])) {
+            $data['error_warning'] = $this->session->data['warning'];
+            unset($this->session->data['warning']);
+        }
 
         $data['breadcrumbs'] = $this->createBreadcrumbs();
 
@@ -224,7 +247,6 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $configs_oauth = $this->model_setting_setting->getSetting($this->key_prefix_oauth);
         $data['without_code'] = false;
         $data['module_mercadolivre_app_id'] = '';
-
 
         if (empty($configs['module_mercadolivre_app_id'])) {
             $data['warning'] = $this->language->get('message_error_extesion_not_configured');
@@ -267,12 +289,10 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
         $data['consider_special_price'] = $configs['module_mercadolivre_consider_special_price'];
         $data['price_adjustment'] = $configs['module_mercadolivre_price_adjustment'];
-        $data['auto_detect_category'] = $configs['module_mercadolivre_auto_detect_category'];
         $data['listing_type'] = $configs['module_mercadolivre_listing_type'];
         $data['with_local_pick_up'] = $configs['module_mercadolivre_shipping_with_local_pick_up'];
-        $data['shipping_free'] = $configs['module_mercadolivre_shipping_free'];
+        $data['shipping_free'] = $configs['module_mercadolivre_shipping_free'] ?? false;
         $data['ml_country'] = $configs['module_mercadolivre_country'];
-        $data['shipping_free'] = $configs['module_mercadolivre_shipping_free'];
 
         $this->getList($data);
     }
@@ -290,6 +310,8 @@ class ControllerExtensionModuleMercadolivre extends Controller
     {
         $filter_name = isset($this->request->get['filter_name']) ? $this->request->get['filter_name'] : '';
         $filter_status = isset($this->request->get['filter_status']) ? $this->request->get['filter_status'] : '';
+        $filter_product_connected = isset($this->request->get['filter_product_connected']) ? $this->request->get['filter_product_connected'] : '';
+
         $order = isset($this->request->get['order']) ? $this->request->get['order'] : 'ASC';
         $sort = isset($this->request->get['sort']) ? $this->request->get['sort'] : 'pd.name';
         $page = isset($this->request->get['page']) ? $this->request->get['page'] : 1;
@@ -297,6 +319,7 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $urlMain = '';
         $this->mountUrl($urlMain, 'filter_name');
         $this->mountUrl($urlMain, 'filter_status');
+        $this->mountUrl($urlMain, 'filter_product_connected');
 
         $url = $urlMain;
         $this->mountUrl($url, 'page');
@@ -315,8 +338,10 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $data['synchronizeStockPrice'] = $this->url->link($this->route . '/synchronizeStockPrice', 'user_token=' . $this->session->data['user_token'], true);
 
         $data['products'] = array();
+
         $filter_data = array(
             'filter_name' => $filter_name,
+            'filter_product_connected' => $filter_product_connected,
             'filter_status' => $filter_status,
             'sort' => $sort,
             'order' => $order,
@@ -325,35 +350,23 @@ class ControllerExtensionModuleMercadolivre extends Controller
         );
 
         $this->load->model('catalog/product');
-        $product_total = $this->model_catalog_product->getTotalProducts($filter_data);
-        $results = $this->model_catalog_product->getProducts($filter_data);
+        $product_total = $this->model_extension_module_mercadolivre->getTotalProducts($filter_data);
+        $results = $this->model_extension_module_mercadolivre->getProducts($filter_data);
         $this->load->model('tool/image');
 
         foreach ($results as $result) {
             $image_path = is_file(DIR_IMAGE . $result['image']) ? $result['image'] : 'no_image.png';
-            $products_in_ml = $this->model_extension_module_mercadolivre->getProductML($result['product_id']);
-
-            $ml_ids = '';
-            $ml_quantity = 0;
-            $ml_categories = [];
-            $status_ml = '';
-
-            foreach ($products_in_ml as $product_in_ml) {
-                $ml_ids .= $product_in_ml['ml_product_code'] . '<br />';
-                $ml_quantity++;
-                $ml_categories[] = $product_in_ml['mercadolivre_category_id'];
-                $status_ml .= ($product_in_ml['status'] ? $this->language->get('text_ml_status_' . $product_in_ml['status']) : $this->language->get('text_ml_without_status')) . '<br />';
-            }
+            $special = $this->model_extension_module_mercadolivre->getPriceSpecial($result['product_id']);
 
             $data['products'][] = array(
                 'product_id' => $result['product_id'],
                 'image' => $this->model_tool_image->resize($image_path, 40, 40),
                 'name' => $result['name'],
                 'model' => $result['model'],
-                'ml_id' => $ml_ids,
-                'ml_quantity' => $ml_quantity,
-                'ml_categories' => $ml_categories,
-                'status_ml' => $status_ml,
+                'price' => $this->currency->format(($special ? $special : $result['price']), $this->session->data['currency']),
+                'ml_id' => $result['ml_product_code'],
+                'ml_category' => $result['mercadolivre_category_id'],
+                'status_ml' => ($result['status_ml'] ? $this->language->get('text_ml_status_' . $result['status_ml']) : $this->language->get('text_ml_without_status')),
                 'quantity' => $result['quantity'],
                 'status' => $result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
                 'edit' => $this->url->link('catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'] . $url, true)
@@ -366,6 +379,7 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $data['sort_name'] = $this->url->link($this->route . '/products', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name' . $url, true);
         $data['sort_quantity'] = $this->url->link($this->route . '/products', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity' . $url, true);
         $data['sort_status'] = $this->url->link($this->route . '/products', 'user_token=' . $this->session->data['user_token'] . '&sort=p.status' . $url, true);
+        $data['sort_price'] = $this->url->link($this->route . '/products', 'user_token=' . $this->session->data['user_token'] . '&sort=p.price' . $url, true);
 
         $url = $urlMain;
         $this->mountUrl($url, 'order');
@@ -382,6 +396,7 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $data['user_token'] = $this->session->data['user_token'];
         $data['filter_name'] = $filter_name;
         $data['filter_status'] = $filter_status;
+        $data['filter_product_connected'] = $filter_product_connected;
         $data['sort'] = $sort;
         $data['order'] = $order;
 
@@ -400,8 +415,9 @@ class ControllerExtensionModuleMercadolivre extends Controller
     {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $products = $this->request->post['selected'];
             $count = 0;
 
@@ -422,15 +438,32 @@ class ControllerExtensionModuleMercadolivre extends Controller
             }
         }
 
-        $this->response->redirect($this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'], true));
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
+        }
+
+        $this->response->redirect($this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'] . $this->getParamsWithFilterAndPagination(), true));
+    }
+
+    private function getParamsWithFilterAndPagination()
+    {
+        $urlMain = '';
+        $this->mountUrl($urlMain, 'filter_name');
+        $this->mountUrl($urlMain, 'filter_status');
+        $this->mountUrl($url, 'page');
+        $this->mountUrl($url, 'order');
+        $this->mountUrl($url, 'sort');
+
+        return $urlMain;
     }
 
     public function pauseProduct()
     {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $products = $this->request->post['selected'];
             $count = 0;
             try {
@@ -450,15 +483,20 @@ class ControllerExtensionModuleMercadolivre extends Controller
             }
         }
 
-        $this->response->redirect($this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'], true));
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
+        }
+
+        $this->response->redirect($this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'] . $this->getParamsWithFilterAndPagination(), true));
     }
 
     public function disconnectProduct()
     {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $products = $this->request->post['selected'];
             $count = 0;
 
@@ -479,13 +517,18 @@ class ControllerExtensionModuleMercadolivre extends Controller
             }
         }
 
-        $this->response->redirect($this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'], true));
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
+        }
+
+        $this->response->redirect($this->url->link('extension/module/mercadolivre/products', 'user_token=' . $this->session->data['user_token'] . $this->getParamsWithFilterAndPagination(), true));
     }
 
     public function addProducts()
     {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
         $json = array();
 
         $subtract_stock = $this->request->post['subtract_product'] ?? '';
@@ -495,6 +538,10 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
         if (!empty($price_adjustment) && preg_match('/[^0-9+><%;:=]/i', $price_adjustment)) {
             $json['error'] = $this->language->get('message_error_price_adjustment');
+        }
+
+        if ($this->error) {
+            $json['error'] = $this->error['warning'];
         }
 
         try {
@@ -510,7 +557,7 @@ class ControllerExtensionModuleMercadolivre extends Controller
                         $product['listing_type'] = $this->request->post['ml_listing_type'];
                         $product['subtract_product'] = $subtract_stock;
                         $product['category_id'] = $category_id;
-                        $product['shipping_free'] = $this->request->post['shipping_free'];
+                        $product['shipping_free'] = $this->request->post['shipping_free'] ?? null;
                         $product['variations'] = array();
                         $product['price'] = (float)$this->config->get('module_mercadolivre_consider_special_price') && $product['special'] ? $product['special'] : $product['price'];
 
@@ -577,9 +624,14 @@ class ControllerExtensionModuleMercadolivre extends Controller
     {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
         $json = array();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->error) {
+            $json['error'] = $this->error['warning'];
+        }
+
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             try {
                 $products = $this->request->post['products'];
 
@@ -634,6 +686,8 @@ class ControllerExtensionModuleMercadolivre extends Controller
         try {
             $this->model_extension_module_mercadolivre->updateAllStockAndPrices();
         } catch (Exception $ex) {
+            $log = new Log('mercadolivre.log');
+            $log->write('Erro ao executar o cron: ' . $ex->getMessage());
         }
 
         $this->response->addHeader('Content-Type: application/json');
@@ -646,11 +700,13 @@ class ControllerExtensionModuleMercadolivre extends Controller
             try {
                 $this->load->model($this->route);
                 $this->model_extension_module_mercadolivre->removeProduct($data[0]);
-            } catch (Exception $ex) { }
+            } catch (Exception $ex) {
+            }
         }
     }
 
-    public function orders() {
+    public function orders()
+    {
         $data = $this->load->language($this->route);
         $filter_expiration_date = $this->request->get['filter_expiration_date'] ?? null;
         $filter_creation_date = $this->request->get['filter_creation_date'] ?? null;
@@ -743,11 +799,13 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
     }
 
-    public function deleteOrder() {
+    public function deleteOrder()
+    {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $orders = $this->request->post['selected'];
             $count = 0;
 
@@ -767,13 +825,19 @@ class ControllerExtensionModuleMercadolivre extends Controller
                 $this->session->data['warning'] = $ex->getMessage();
             }
         }
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
+        }
+
         $this->response->redirect($this->url->link('extension/module/mercadolivre/orders', 'user_token=' . $this->session->data['user_token'], true));
     }
 
-    public function questions() {
+    public function questions()
+    {
         $data = $this->load->language($this->route);
-        $filter_question = empty($this->request->get['filter_question']) ? null :  $this->request->get['filter_question'];
+        $filter_question = empty($this->request->get['filter_question']) ? null : $this->request->get['filter_question'];
         $page = $this->request->get['page'] ?? 1;
+        $this->validatePermission();
 
         $this->document->setTitle($this->language->get('heading_title_questions'));
         $data['heading_title'] = $this->language->get('heading_title_questions');
@@ -795,6 +859,13 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
         if (!$this->validateConfig($configs)) {
             $data['warning'] = $this->language->get('message_error_configs_not_done');
+
+            $this->response->redirect($this->url->link('extension/module/mercadolivre', 'user_token=' . $this->session->data['user_token'], true));
+            return;
+        }
+
+        if ($this->error) {
+            $data['warning'] = $this->error['warning'];
 
             $this->response->redirect($this->url->link('extension/module/mercadolivre', 'user_token=' . $this->session->data['user_token'], true));
             return;
@@ -859,11 +930,13 @@ class ControllerExtensionModuleMercadolivre extends Controller
         $this->response->setOutput($this->load->view($this->route . '/questions', $data));
     }
 
-    public function deleteQuestion() {
+    public function deleteQuestion()
+    {
         $this->load->language($this->route);
         $this->load->model($this->route);
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $questions = $this->request->post['selected'];
             $count = 0;
 
@@ -883,13 +956,19 @@ class ControllerExtensionModuleMercadolivre extends Controller
                 $this->session->data['warning'] = $ex->getMessage();
             }
         }
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
+        }
+
         $this->response->redirect($this->url->link('extension/module/mercadolivre/questions', 'user_token=' . $this->session->data['user_token'], true));
     }
 
-    public function addAnswer() {
+    public function addAnswer()
+    {
         $json = array();
+        $this->validatePermission();
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+        if ($this->request->server['REQUEST_METHOD'] == 'POST' && empty($this->error)) {
             $question_id = $this->request->post['ml_question_id'];
             $answer = $this->request->post['ml_answer'];
             $this->load->language($this->route);
@@ -897,13 +976,17 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
             try {
                 if ($this->model_extension_module_mercadolivre->sendAsnwer($question_id, $answer)) {
-                    $json['success'] =  $this->language->get('text_question_answered');
+                    $json['success'] = $this->language->get('text_question_answered');
                 } else {
-                    $json['error'] =  $this->language->get('text_question_no_answered');
+                    $json['error'] = $this->language->get('text_question_no_answered');
                 }
             } catch (Exception $ex) {
                 $json['error'] = $ex->getMessage();
             }
+        }
+
+        if ($this->error) {
+            $this->session->data['warning'] = $this->error['warning'];
         }
 
         $this->response->addHeader('Content-Type: application/json');
@@ -912,8 +995,86 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
     public function eventEditProduct($route, $data)
     {
+        $log = new Log('mercadolivre.log');
+        $log->write('Teste:' . json_encode($data));
+
+    }
+
+    public function dashboard() {
+        $data = $this->load->language($this->route);
+        $this->load->model($this->route);
+
+        $this->document->setTitle($this->language->get('heading_title_dashboard'));
+        $data['heading_title'] = $this->language->get('heading_title_dashboard');
+
+        $data['breadcrumbs'] = $this->createBreadcrumbs();
+
+        $data['breadcrumbs'][] = array(
+            'text' => $this->language->get('heading_title_dashboard'),
+            'href' => $this->url->link($this->route . '/dashboard', 'user_token=' . $this->session->data['user_token'], true)
+        );
+
+        $data['question'] = $this->url->link($this->route . '/questions', 'user_token=' . $this->session->data['user_token'], true);
+        $data['order'] = $this->url->link($this->route . '/orders', 'user_token=' . $this->session->data['user_token'], true);
+
+        $data['user_token'] = $this->session->data['user_token'];
+        $this->loadTemplate($data);
+        $this->response->setOutput($this->load->view($this->route . '/dashboard', $data));
+    }
+
+    public function apiOrders() {
+        $this->load->model($this->route);
+        $filter_data = [
+            'start' => 0,
+            'limit' => 10
+        ];
+
+        $json = array();
+
+        $results = $this->model_extension_module_mercadolivre->getOrders($filter_data);
+
+        foreach ($results as $order) {
+            $json[] = [
+                'ml_id' => $order['ml_id'],
+                'date_created' => date('d/m/Y H:i', strtotime($order['date_created'])),
+                'total' => $this->currency->format($order['total'], $this->session->data['currency'] ?? 'BRL'),
+                'buyer' => $order['buyer']
+            ];
+        }
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    public function apiQuestions() {
+        $this->load->model($this->route);
+        $filter_data = [
+            'start' => 0,
+            'limit' => 10
+        ];
+
+        $json = array();
+
+        $results = $this->model_extension_module_mercadolivre->getQuestions($filter_data);
+        foreach ($results as $question) {
+            $product_ml = $this->model_extension_module_mercadolivre->getProductMLBy($question['mercadolivre_products_id']);
+            $product_name = $this->language->get('entry_without_product_related');
+
+            if (!empty($product_ml)) {
+                $product = $this->model_extension_module_mercadolivre->getProduct($product_ml['product_id']);
+                $product_name = $product['name'];
+            }
 
 
+            $json[] = [
+                'question' => $question['question'],
+                'product_name' => $product_name,
+                'created_at' => date('d/m/Y H:i', strtotime($question['created_at']))
+            ];
+        }
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
     }
 
     public function logs()
@@ -960,15 +1121,19 @@ class ControllerExtensionModuleMercadolivre extends Controller
 
     public function clearLog()
     {
+        $this->validatePermission();
         $this->load->language($this->route);
+        if (empty($this->error)) {
+            $file = DIR_LOGS . 'mercadolivre.log';
+            if (file_exists($file)) {
+                $handle = fopen($file, 'w+');
+                fclose($handle);
+            }
 
-        $file = DIR_LOGS . 'mercadolivre.log';
-        if (file_exists($file)) {
-            $handle = fopen($file, 'w+');
-            fclose($handle);
+            $this->session->data['success'] = $this->language->get('text_success');
+        } else {
+            $this->session->data['warning'] = $this->error['warning'];
         }
-
-        $this->session->data['success'] = $this->language->get('text_success');
 
         $this->response->redirect($this->url->link('extension/module/mercadolivre/logs', 'user_token=' . $this->session->data['user_token'], true));
     }

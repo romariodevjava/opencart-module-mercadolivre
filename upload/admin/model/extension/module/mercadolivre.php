@@ -162,6 +162,10 @@ class ModelExtensionModuleMercadolivre extends Model
 
     public function createProductInMl($product)
     {
+        if (!empty($this->getProductML($product['product_id']))) {
+            throw new Exception('O produto ' . $product['name'] . ' já está cadastrado no Mercado Livre');
+        }
+
         $request = $this->createRequestForCreateAds($product);
         $this->prepareForRequest();
         $response = self::$mlSdk->post('items', $request);
@@ -272,17 +276,9 @@ class ModelExtensionModuleMercadolivre extends Model
 
             $description = str_replace($find, $replace, $this->config->get('module_mercadolivre_template_description'));
         }
-        $description = strip_tags(html_entity_decode($description), '<br><p><li>');
-        $description = preg_replace("/<p\s(.+?)>(.+?)<\/p>/is", "$2\n\n", $description);
-        $description = preg_replace("/<p>(.+?)<\/p>/is", "$1\n\n", $description);
-        $description = preg_replace("/<br>/is", "\n\n", $description);
-        $description = preg_replace("/<li\s(.+?)>(.+?)<\/li>/is", "$2\n", $description);
-        $description = preg_replace("/<li>(.+?)<\/li>/is", "$1\n", $description);
-        $description = preg_replace('/(\n){3,}/', "\n\n", $description);
-        $description = preg_replace('/<p>/is', "\n", $description);
-        $description = preg_replace('/<\/p>/is', "\n", $description);
+        $description = strip_tags(html_entity_decode($description), '<br><p><li><font>');
 
-        return $description;
+        return Soundasleep\Html2Text::convert($description);
     }
 
     private function getPrice($price, $price_adjustment)
@@ -475,12 +471,12 @@ class ModelExtensionModuleMercadolivre extends Model
 
     private function registerOauthAttributes($accessToken, $refreshToken, $expireAt)
     {
-        $this->db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE store_id = '0' AND `code` = '" . $this->key_prefix . "' AND `key` = 'module_mercadolivre_oauth_access_token'");
-        $this->db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE store_id = '0' AND `code` = '" . $this->key_prefix . "' AND `key` = 'module_mercadolivre_oauth_refresh_token'");
-        $this->db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE store_id = '0' AND `code` = '" . $this->key_prefix . "' AND `key` = 'module_mercadolivre_oauth_expire_at'");
-        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix . "', `key` = 'module_mercadolivre_oauth_access_token', `value` = '" . $this->db->escape($accessToken) . "'");
-        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix . "', `key` = 'module_mercadolivre_oauth_refresh_token', `value` = '" . $this->db->escape($refreshToken) . "'");
-        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix . "', `key` = 'module_mercadolivre_oauth_expire_at', `value` = '" . $this->db->escape($expireAt) . "'");
+        $this->db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE store_id = '0' AND `code` = '" . $this->key_prefix_oauth . "' AND `key` = 'module_mercadolivre_oauth_access_token'");
+        $this->db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE store_id = '0' AND `code` = '" . $this->key_prefix_oauth . "' AND `key` = 'module_mercadolivre_oauth_refresh_token'");
+        $this->db->query("DELETE FROM `" . DB_PREFIX . "setting` WHERE store_id = '0' AND `code` = '" . $this->key_prefix_oauth . "' AND `key` = 'module_mercadolivre_oauth_expire_at'");
+        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix_oauth . "', `key` = 'module_mercadolivre_oauth_access_token', `value` = '" . $this->db->escape($accessToken) . "'");
+        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix_oauth . "', `key` = 'module_mercadolivre_oauth_refresh_token', `value` = '" . $this->db->escape($refreshToken) . "'");
+        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = '" . $this->key_prefix_oauth . "', `key` = 'module_mercadolivre_oauth_expire_at', `value` = '" . $this->db->escape($expireAt) . "'");
     }
 
     public function activeProduct($product_id)
@@ -568,7 +564,7 @@ class ModelExtensionModuleMercadolivre extends Model
 
     public function updateAllStockAndPrices()
     {
-        $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_products` WHERE (`updated` IS NULL OR `updated` < '" . date('Y-m-d H:i:s', strtotime('-5 hours')) . "') ORDER BY `updated` ASC LIMIT 50");
+        $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_products` WHERE (`updated_at` IS NULL OR `updated_at` < '" . date('Y-m-d H:i:s', strtotime('-5 hours')) . "') ORDER BY `updated_at` ASC LIMIT 50");
 
         foreach ($result->rows as $product) {
             $this->updateStockAndPrice($product);
@@ -609,6 +605,16 @@ class ModelExtensionModuleMercadolivre extends Model
         }
 
         return $request;
+    }
+
+    public function getPriceSpecial($product_id) {
+        $result = $this->db->query("SELECT price FROM `" . DB_PREFIX . "product_special` ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) AND `product_id` = '" . (int) $product_id . "' ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special");
+
+        if ($result->num_rows) {
+            return $result->row['price'];
+        }
+
+        return false;
     }
 
     public function getProduct($product_id)
@@ -653,11 +659,61 @@ class ModelExtensionModuleMercadolivre extends Model
                 'length' => $query->row['length'],
                 'width' => $query->row['width'],
                 'height' => $query->row['height'],
-                'status' => $query->row['status']
+                'status' => $query->row['status'],
+                'tax_class_id' => $query->row['tax_class_id'],
             );
         } else {
             return false;
         }
+    }
+
+    public function getProducts($data = array()) {
+        $sql = "SELECT p.*, pd.name as name, mp.ml_product_code, mp.status as status_ml, mp.mercadolivre_category_id FROM " . DB_PREFIX . "product p 
+        LEFT JOIN " . DB_PREFIX . "product_description pd ON p.product_id = pd.product_id 
+        LEFT JOIN " . DB_PREFIX . "mercadolivre_products mp ON p.product_id = mp.product_id 
+        WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "' ";
+
+        $this->criteriaGetProducts($data, $sql);
+
+        $sql .= " GROUP BY p.product_id";
+
+        $sort_data = array(
+            'pd.name',
+            'p.price',
+            'p.quantity',
+            'p.status',
+            'p.sort_order'
+        );
+
+        if (isset($data['sort']) && in_array($data['sort'], $sort_data)) {
+            $sql .= " ORDER BY " . $data['sort'];
+        } else {
+            $sql .= " ORDER BY pd.name";
+        }
+
+        if (isset($data['order']) && ($data['order'] == 'DESC')) {
+            $sql .= " DESC";
+        } else {
+            $sql .= " ASC";
+        }
+
+        $this->treatPagination($data, $sql);
+        $query = $this->db->query($sql);
+
+        return $query->rows;
+    }
+
+    public function getTotalProducts($data = array()) {
+
+        $sql = "SELECT COUNT(DISTINCT p.product_id) AS total FROM " . DB_PREFIX . "product p 
+        LEFT JOIN " . DB_PREFIX . "product_description pd ON p.product_id = pd.product_id 
+        LEFT JOIN " . DB_PREFIX . "mercadolivre_products mp ON p.product_id = mp.product_id 
+        WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "'";
+
+        $this->criteriaGetProducts($data, $sql);
+        $query = $this->db->query($sql);
+
+        return $query->row['total'];
     }
 
     public function removeProduct($product_id)
@@ -715,6 +771,8 @@ class ModelExtensionModuleMercadolivre extends Model
     public function getOrders($data = array()) {
         $query = 'SELECT * FROM `'. DB_PREFIX . 'mercadolivre_orders`';
         $this->createCriteriaOrders($data, $query);
+
+        $query .= ' ORDER BY mercadolivre_order_id DESC';
         $this->treatPagination($data, $query);
         $result = $this->db->query($query);
 
@@ -754,12 +812,12 @@ class ModelExtensionModuleMercadolivre extends Model
     private function createCriteriaOrders($data, &$query) {
         $criteria = [];
 
-        if ($data['filter_expiration_date'] !== null) {
+        if (!empty($data['filter_expiration_date'])) {
             $date = date('Y-m-d', strtotime($data['filter_expiration_date']));
             $criteria[] = "(`expiration_date` between '$date 00:00:00' AND '$date 23:59:00')";
         }
 
-        if ($data['filter_creation_date'] !== null) {
+        if (!empty($data['filter_creation_date'])) {
             $date = date('Y-m-d', strtotime($data['filter_expiration_date']));
             $criteria[] = "(`date_created` between '$date 00:00:00' AND '$date 23:59:00')";
         }
@@ -787,13 +845,15 @@ class ModelExtensionModuleMercadolivre extends Model
     public function getQuestions($data = array()) {
         $query = 'SELECT * FROM `'. DB_PREFIX . 'mercadolivre_questions`';
 
-        if ($data['filter_question'] !== null) {
+        if (isset($data['filter_question']) && $data['filter_question'] !== null) {
             if ($data['filter_question']) {
                 $query .= ' WHERE `answer` IS NOT NULL ';
             } else {
                 $query .= ' WHERE `answer` IS NULL ';
             }
         }
+
+        $query .= ' ORDER BY mercadolivre_question_id DESC';
 
         $this->treatPagination($data, $query);
         $result = $this->db->query($query);
@@ -837,5 +897,29 @@ class ModelExtensionModuleMercadolivre extends Model
         }
 
         return false;
+    }
+
+    /**
+     * @param $data
+     * @param string $sql
+     * @return void
+     */
+    private function criteriaGetProducts($data, &$sql)
+    {
+        if (isset($data['filter_product_connected']) && $data['filter_product_connected'] !== '') {
+            if ($data['filter_product_connected'] == '0') {
+                $sql .= ' AND mp.mercadolivre_products_id IS NULL ';
+            } else if ($data['filter_product_connected'] == '1') {
+                $sql .= ' AND mp.mercadolivre_products_id IS NOT NULL ';
+            }
+        }
+
+        if (!empty($data['filter_name'])) {
+            $sql .= " AND pd.name LIKE '%" . $this->db->escape($data['filter_name']) . "%'";
+        }
+
+        if (isset($data['filter_status']) && $data['filter_status'] !== '') {
+            $sql .= " AND p.status = '" . (int)$data['filter_status'] . "'";
+        }
     }
 }

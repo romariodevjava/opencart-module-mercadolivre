@@ -6,6 +6,7 @@ $_['heading_title_products']                 = 'Gerenciamento de Produtos no Mer
 $_['heading_title_logs']                     = 'Logs do Mercado Livre';
 $_['heading_title_questions']                = 'Perguntas do Mercado Livre';
 $_['heading_title_orders']                   = 'Pedidos do Mercado Livre';
+$_['heading_title_dashboard']                = 'Dashboard do Mercado Livre';
 
 // Text
 $_['text_extension']          = 'Extensões';
@@ -63,6 +64,7 @@ $_['entry_creation_date']              = 'Data de criação';
 $_['entry_questions']                  = 'Perguntas';
 $_['entry_variations']                 = 'Variações';
 $_['entry_product_name']               = 'Nome do produto';
+$_['entry_product_connected']          = 'Somente produtos conectado?';
 $_['entry_without_product_related']    = 'Sem produto relacionado';
 $_['entry_subtract_product']           = 'Subtrair estoque ao realizar uma venda no ML?';
 
@@ -113,6 +115,10 @@ $_['text_no_order_deleted']                        = 'Nenhuma pedido deletado.';
 $_['text_question_no_answered']                    = 'Pergunta não respondida.';
 $_['text_question_answered']                       = 'Pergunta respondida com sucesso.';
 $_['text_no_question_deleted']                     = 'Nenhuma pergunta deletada.';
+$_['text_last_questions']                          = 'Ultimas perguntas recebidas.';
+$_['text_last_orders']                             = 'Ultimos pedidos recebidos.';
+$_['text_perform_purchase']                        = 'realizou uma compra de: ';
+$_['text_empty']                                   = 'Vazio';
 
 //Tabs
 $_['tab_general']                            = 'Configs App';
@@ -139,6 +145,7 @@ $_['column_mercadolivre_order_id']          = 'Id pedido ML';
 $_['column_customer_name']             = 'Nome do cliente';
 $_['column_customer_document']             = 'Documento do cliente';
 $_['column_mercadolivre_order_total']             = 'Valor do pedido';
+$_['column_price']             = 'Valor';
 
 //Buttons
 $_['button_back']                       = 'Voltar';

@@ -33,6 +33,7 @@
         <operation>
             <search><![CDATA[$_['text_extension']]]></search>
             <add position="before"><![CDATA[
+$_['text_mercadolivre_dashboard']            = 'Dashboard';
 $_['text_mercadolivre_settings']            = 'Configurações';
 $_['text_mercadolivre_authentication']       = 'Fazer Autenticação';
 $_['text_mercadolivre_orders']              = 'Pedidos';
@@ -50,6 +51,13 @@ $_['text_mercadolivre_logs']                = 'Logs';
             <add position="before"><![CDATA[
 
         $mercadolivre = array();
+
+          $mercadolivre[] = array(
+            'name'	   => $this->language->get('text_mercadolivre_dashboard'),
+            'href'     => $this->url->link('extension/module/mercadolivre/dashboard', 'user_token=' . $this->session->data['user_token'], true),
+            'children' => array()
+        );
+
         $mercadolivre[] = array(
             'name'	   => $this->language->get('text_mercadolivre_settings'),
             'href'     => $this->url->link('extension/module/mercadolivre', 'user_token=' . $this->session->data['user_token'], true),

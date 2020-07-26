@@ -50,6 +50,15 @@
                         </div>
 
                         <div class="form-group">
+                            <label class="control-label" for="input-product_connected">{{ entry_product_connected }}</label>
+                            <select name="filter_product_connected" id="input-product_connected" class="form-control">
+                                <option value=""></option>
+                                <option value="1" {{ filter_product_connected == '1' ? 'selected' : '' }}>{{ text_enabled }}</option>
+                                <option value="0" {{ filter_product_connected == '0' ? 'selected' : '' }}>{{ text_disabled }}</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label class="control-label" for="input-status">{{ entry_status }}</label>
                             <select name="filter_status" id="input-status" class="form-control">
                                 <option value=""></option>
@@ -80,8 +89,8 @@
                                         <td class="text-left">{% if sort == 'pd.name' %} <a href="{{ sort_name }}" class="{{ order|lower }}">{{ column_name }}</a> {% else %} <a href="{{ sort_name }}">{{ column_name }}</a> {% endif %}</td>
                                         <td class="text-right">{% if sort == 'p.quantity' %} <a href="{{ sort_quantity }}" class="{{ order|lower }}">{{ column_quantity }}</a> {% else %} <a href="{{ sort_quantity }}">{{ column_quantity }}</a> {% endif %}</td>
                                         <td class="text-left">{% if sort == 'p.status' %} <a href="{{ sort_status }}" class="{{ order|lower }}">{{ column_status }}</a> {% else %} <a href="{{ sort_status }}">{{ column_status }}</a> {% endif %}</td>
+                                        <td class="text-left">{% if sort == 'p.price' %} <a href="{{ sort_price }}" class="{{ order|lower }}">{{ column_price }}</a> {% else %} <a href="{{ sort_price }}">{{ column_price }}</a> {% endif %}</td>
                                         <td class="text-left">{{ column_mercadolivre_id }}</td>
-                                        <td class="text-left">{{ column_mercadolivre_quantity_postage }}</td>
                                         <td class="text-left">{{ column_mercadolivre_category }}</td>
                                         <td class="text-left">{{ column_mercadolivre_status }}</td>
                                         <td class="text-right">{{ column_action }}</td>
@@ -106,23 +115,21 @@
                                                     <span class="label {{ product.quantity <= 0 ? 'label-warning' : (product.quantity <= 5 ? 'label-danger' : 'label-success' ) }}">{{ product.quantity }}</span>
                                                 </td>
                                                 <td class="text-left">{{ product.status }}</td>
+                                                <td class="text-left">{{ product.price }}</td>
 
-                                                {% if product.ml_quantity %}
+                                                {% if product.ml_id %}
                                                     <td class="text-left">{{ product.ml_id }}</td>
-                                                    <td class="text-left">{{ product.ml_quantity }}</td>
                                                     <td class="text-left">
-                                                        {% for ml_category in product.ml_categories %}
-                                                            {% if ml_category %}
-                                                                <span data-ml-category="{{ ml_category }}" class="load-categories"></span><br/>
-                                                            {% else %}
-                                                                {{ text_without_category }}
-                                                            {% endif %}
-                                                        {% endfor %}
+                                                        {% if product.ml_category %}
+                                                            <span data-ml-category="{{ product.ml_category }}" class="load-categories"></span><br/>
+                                                        {% else %}
+                                                            {{ text_without_category }}
+                                                        {% endif %}
                                                     </td>
                                                     <td class="text-left">{{ product.status_ml }} </td>
 
                                                 {% else %}
-                                                    <td class="text-left" colspan="4">{{ text_without_product_in_ml }}</td>
+                                                    <td class="text-left" colspan="3">{{ text_without_product_in_ml }}</td>
                                                 {% endif %}
 
                                                 <td class="text-right"><a href="{{ product.edit }}" data-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary"><i class="fa fa-pencil"></i></a></td>
@@ -399,9 +406,15 @@
         if (filter_name) {
             url += '&filter_name=' + encodeURIComponent(filter_name);
         }
+
         var filter_status = $('select[name=\'filter_status\']').val();
         if (filter_status) {
             url += '&filter_status=' + encodeURIComponent(filter_status);
+        }
+
+        var filter_product_connected = $('select[name=\'filter_product_connected\']').val();
+        if (filter_product_connected) {
+            url += '&filter_product_connected=' + encodeURIComponent(filter_product_connected);
         }
 
         window.location = url;

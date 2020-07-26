@@ -125,12 +125,16 @@ class ModelExtensionModuleMercadolivre extends Model
     private function updateOrder($order_ml)
     {
         $this->db->query('UPDATE `' . DB_PREFIX . "mercadolivre_orders` SET `status` = '" . $this->db->escape($order_ml->status) . "' WHERE `ml_id` = '" . (int)$order_ml->id . "'");
+        if ($order_ml->status == 'cancelled') {
+            $this->sumStock($order_ml);
+        }
     }
 
     private function sendMessageForBuyer($order_ml)
     {
         $messageToBuyerEnabled = $this->config->get('module_mercadolivre_feedback_enabled');
-        if (!empty($messageToBuyerEnabled) && $messageToBuyerEnabled == 'y' && $order_ml->status == 'paid') {
+
+        if (!empty($messageToBuyerEnabled) && $messageToBuyerEnabled == 'y') {
             $this->prepareForRequest();
             $pack_id = empty($order_ml->pack_id) ? $order_ml->id : $order_ml->pack_id;
             $uri = "messages/packs/$pack_id/sellers/{$order_ml->seller->id}";
@@ -193,8 +197,34 @@ class ModelExtensionModuleMercadolivre extends Model
                             $this->db->query('UPDATE `' . DB_PREFIX . 'product_option_value` pov 
                                               INNER JOIN `' . DB_PREFIX . 'option_value_description` ovd ON pov.option_value_id = ovd.option_value_id 
                                               INNER JOIN `' . DB_PREFIX . 'option_description` od ON pov.option_id = od.option_id 
-                                              SET pov.quantity = (pov.quantity - ' . (int)$item->quantity . ") WHERE ovd.name = '" . $this->db->escape($variation->value_name) .  "' 
-                                              AND od.name = '" . $this->db->escape($variation->name) ."' AND pov.product_id = '" . (int)$product_ml['product_id']  . "' AND pov.subtract = '1'");
+                                              SET pov.quantity = (pov.quantity - ' . (int)$item->quantity . ") WHERE ovd.name = '" . $this->db->escape($variation->value_name) . "' 
+                                              AND od.name = '" . $this->db->escape($variation->name) . "' AND pov.product_id = '" . (int)$product_ml['product_id'] . "' AND pov.subtract = '1'");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private function sumStock($order_ml)
+    {
+        if (is_array($order_ml->order_items)) {
+            foreach ($order_ml->order_items as $item) {
+                $result = $this->db->query('SELECT * FROM `' . DB_PREFIX . "mercadolivre_products` WHERE `ml_product_code` = '" . $this->db->escape($item->item->id) . "'");
+                $product_ml = $result->row;
+
+                if (!empty($product_ml) && $product_ml['subtract_product']) {
+                    $this->load->model('catalog/product');
+
+                    $this->db->query("UPDATE `" . DB_PREFIX . "product` SET quantity = (quantity + " . (int)$item->quantity . ") WHERE product_id = '" . (int)$product_ml['product_id'] . "' AND subtract = '1'");
+
+                    if (is_array($item->item->variation_attributes)) {
+                        foreach ($item->item->variation_attributes as $variation) {
+                            $this->db->query('UPDATE `' . DB_PREFIX . 'product_option_value` pov 
+                                              INNER JOIN `' . DB_PREFIX . 'option_value_description` ovd ON pov.option_value_id = ovd.option_value_id 
+                                              INNER JOIN `' . DB_PREFIX . 'option_description` od ON pov.option_id = od.option_id 
+                                              SET pov.quantity = (pov.quantity + ' . (int)$item->quantity . ") WHERE ovd.name = '" . $this->db->escape($variation->value_name) . "' 
+                                              AND od.name = '" . $this->db->escape($variation->name) . "' AND pov.product_id = '" . (int)$product_ml['product_id'] . "' AND pov.subtract = '1'");
                         }
                     }
                 }
