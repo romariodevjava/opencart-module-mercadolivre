@@ -608,7 +608,7 @@ class ModelExtensionModuleMercadolivre extends Model
     }
 
     public function getPriceSpecial($product_id) {
-        $result = $this->db->query("SELECT price FROM `" . DB_PREFIX . "product_special` ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) AND `product_id` = '" . (int) $product_id . "' ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special");
+        $result = $this->db->query("SELECT price FROM `" . DB_PREFIX . "product_special` WHERE ((`date_start` = '0000-00-00' OR `date_start` < NOW()) AND (`date_end` = '0000-00-00' OR `date_end` > NOW())) AND `product_id` = '" . (int) $product_id . "' ORDER BY priority ASC, price ASC LIMIT 1");
 
         if ($result->num_rows) {
             return $result->row['price'];
