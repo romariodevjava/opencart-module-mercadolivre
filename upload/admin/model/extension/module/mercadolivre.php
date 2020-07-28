@@ -581,7 +581,7 @@ class ModelExtensionModuleMercadolivre extends Model
     private function createRequestForUpdateStockAndPrice($product, $variations)
     {
         $product_opencart = $this->getProduct($product['product_id']);
-        $price = (float)$this->config->get('module_mercadolivre_consider_special_price') && $product_opencart['special'] ? $product_opencart['special'] : $product_opencart['price'];
+        $price = (float) ($this->config->get('module_mercadolivre_consider_special_price') ?? false) && $product_opencart['special'] ? $product_opencart['special'] : $product_opencart['price'];
         $request = [];
 
         if (!empty($variations)) {

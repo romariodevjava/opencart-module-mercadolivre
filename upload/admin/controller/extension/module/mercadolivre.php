@@ -287,10 +287,8 @@ class ControllerExtensionModuleMercadolivre extends Controller
             return;
         }
 
-        $data['consider_special_price'] = $configs['module_mercadolivre_consider_special_price'];
         $data['price_adjustment'] = $configs['module_mercadolivre_price_adjustment'];
         $data['listing_type'] = $configs['module_mercadolivre_listing_type'];
-        $data['with_local_pick_up'] = $configs['module_mercadolivre_shipping_with_local_pick_up'];
         $data['shipping_free'] = $configs['module_mercadolivre_shipping_free'] ?? false;
         $data['ml_country'] = $configs['module_mercadolivre_country'];
 
@@ -559,7 +557,7 @@ class ControllerExtensionModuleMercadolivre extends Controller
                         $product['category_id'] = $category_id;
                         $product['shipping_free'] = $this->request->post['shipping_free'] ?? null;
                         $product['variations'] = array();
-                        $product['price'] = (float)$this->config->get('module_mercadolivre_consider_special_price') && $product['special'] ? $product['special'] : $product['price'];
+                        $product['price'] = (float) ($this->config->get('module_mercadolivre_consider_special_price') ?? false) && $product['special'] ? $product['special'] : $product['price'];
 
                         $product['images'] = $this->model_catalog_product->getProductImages($product_id);
                         $options = $this->model_catalog_product->getProductOptions($product_id);
