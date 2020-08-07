@@ -1,5 +1,6 @@
 <?php
 
+include_once DIR_APPLICATION . 'controller/extension/module/mercadolivre_modules/ValidationErrorException.php';
 
 class ModelExtensionModuleMercadolivre extends Model
 {
@@ -464,6 +465,10 @@ class ModelExtensionModuleMercadolivre extends Model
             $this->log->write('PATH: ' . $path);
             $this->log->write('REQUEST: ' . json_encode($request));
             $this->log->write('RESPONSE: ' . json_encode($response));
+
+            if ($response['body']->status === 400 && isset($response['body']->cause)) {
+                throw new ValidationErrorException($response['body']->cause, $response['body']->message);
+            }
 
             throw new Exception($response['body']->message);
         }

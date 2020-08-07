@@ -167,6 +167,7 @@
 
             <div class="modal-body">
                 <div class="container-fluid">
+                    <div class="alert alert-danger" style="display: none;" id="sendProductsErrorsContainer"></div>
                     <form class="form-horizontal" onsubmit="return false;" id="add_products_in_ml">
                         <div class="row">
 
@@ -302,6 +303,7 @@
 
     function loadModalAddProducts() {
        if (validateSelections()) {
+           $('#sendProductsErrorsContainer').hide();
            $('#modalAddProductToML').modal('show');
        }
     }
@@ -329,7 +331,17 @@
                 },
                 success: function (json) {
                     if (json['error']) {
-                        alert(json['error']);
+                        $('#sendProductsErrorsContainer').html('<p><strong>Os seguintes erros ocorreram:</strong></p>');
+                        $('#sendProductsErrorsContainer').show();
+                        if (json['error']['errors']) {
+                            json['error']['errors'].forEach((error) => {
+                                if (error.type === 'error') {
+                                    $('#sendProductsErrorsContainer').append('<p>' + error.message + '</p>');
+                                }
+                            })
+                        } else {
+                            $('#sendProductsErrorsContainer').append('<p>' + json['error'] + '</p>');
+                        }
                     }
 
                     if (json['success']) {
