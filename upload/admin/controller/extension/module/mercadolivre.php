@@ -2,6 +2,7 @@
 include 'mercadolivre_modules/Meli.php';
 include 'mercadolivre_modules/Html2TextException.php';
 include 'mercadolivre_modules/Html2Text.php';
+include_once 'mercadolivre_modules/ValidationErrorException.php';
 
 class ControllerExtensionModuleMercadolivre extends Controller
 {
@@ -589,6 +590,11 @@ class ControllerExtensionModuleMercadolivre extends Controller
                 }
                 $json['success'] = $this->language->get('text_products_add_success');
             }
+        } catch (ValidationErrorException $ex) {
+            $json['error'] = [
+                'message' => $ex->getMessage(),
+                'errors' => $ex->getErrors()
+            ];
         } catch (Exception $ex) {
             $json['error'] = $ex->getMessage();
         }

@@ -178,6 +178,7 @@ $_['message_error_select_category_or_unselect'] = 'Por favor, selecione uma cate
 $_['message_error_configs_not_done'] = 'Por favor, configure tudo antes de entrar aqui!';
 $_['message_error_answer']          = 'Por favor, para enviar uma resposta, escreva uma mensagem!';
 $_['message_log_error_warning']    = 'Aviso: Seu arquivo de log %s é %s!';
+$_['message_send_products_error_title'] = 'Os seguintes erros ocorreram:';
 
 $_['invalid_question'] = 'Não é possível responder à pergunta.';
 $_['invalid_post_body'] = 'Parâmetros inválidos.';
