@@ -281,7 +281,7 @@
             $form.submit();
         }
     }
-    
+
     function validateSelections() {
         var $products = $("input[name='selected[]']:checked");
 
@@ -302,10 +302,10 @@
     }
 
     function loadModalAddProducts() {
-       if (validateSelections()) {
-           $('#sendProductsErrorsContainer').hide();
-           $('#modalAddProductToML').modal('show');
-       }
+        if (validateSelections()) {
+            $('#sendProductsErrorsContainer').hide();
+            $('#modalAddProductToML').modal('show');
+        }
     }
 
     function sendProducts(form) {
@@ -331,7 +331,7 @@
                 },
                 success: function (json) {
                     if (json['error']) {
-                        $('#sendProductsErrorsContainer').html('<p><strong>Os seguintes erros ocorreram:</strong></p>');
+                        $('#sendProductsErrorsContainer').html('<p><strong>{{ message_send_products_error_title }}</strong></p>');
                         $('#sendProductsErrorsContainer').show();
                         if (json['error']['errors']) {
                             json['error']['errors'].forEach((error) => {
